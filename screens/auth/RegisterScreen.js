@@ -1,18 +1,39 @@
 import React from 'react';
 import { StyleSheet, View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { registerWithEmail } from '../../firebase/authService';
+import { Alert } from 'react-native';
+
+
 
 const RegisterScreen = () => {
   const navigation = useNavigation();
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [confirmPassword, setConfirmPassword] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
 
-  const handleRegister = () => {
-    // Aquí iría la lógica para registrar al usuario
-    console.log('Registrando con:', email, password);
-    // Después de registrar, podrías navegar al login
-    // navigation.navigate('Login');
+
+  const handleRegister = async () => {
+    if (!email || !password || !confirmPassword) {
+      Alert.alert('Error', 'Completa todos los campos');
+      return;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert('Error', 'Las contraseñas no coinciden');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      await registerWithEmail(email, password);
+      Alert.alert('Éxito', 'Usuario registrado correctamente');
+      navigation.navigate('Login');
+    } catch (error) {
+      Alert.alert('Error al registrar', error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
