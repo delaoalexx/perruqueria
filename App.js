@@ -5,6 +5,7 @@ import WelcomeScreen from "./screens/auth/WelcomeScreen";
 import LoginScreen from "./screens/auth/LoginScreen";
 import RegisterScreen from "./screens/auth/RegisterScreen";
 import DashboardScreen from "./screens/DashboardScreen";
+import TabNavigator from "./navigation/TabNavigator";
 
 const Stack = createStackNavigator();
 
@@ -29,7 +30,7 @@ export default function App() {
         />
         <Stack.Screen
           name="Dashboard"
-          component={DashboardScreen}
+          component={TabNavigator}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>

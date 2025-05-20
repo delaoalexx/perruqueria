@@ -26,7 +26,7 @@ const LoginScreen = () => {
     setLoading(true);
     try {
       await loginWithEmail(email, password);
-      navigation.navigate("Dashboard");
+      navigation.replace("Dashboard");
     } catch (error) {
       Alert.alert("Error al iniciar sesión", error.message);
     } finally {

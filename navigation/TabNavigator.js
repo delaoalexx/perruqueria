@@ -1,0 +1,43 @@
+// navigation/TabNavigator.js
+import React from "react";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { Ionicons } from "@expo/vector-icons";
+
+import DashboardScreen from "../screens/DashboardScreen";
+import ServicesScreen from "../screens/ServicesScreen";
+
+const Tab = createBottomTabNavigator();
+
+const TabNavigator = () => {
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+
+          if (route.name === "Inicio") {
+            iconName = focused ? "paw" : "paw-outline";
+          } else if (route.name === "Servicios") {
+            iconName = focused ? "cut" : "cut-outline";
+          } else if (route.name === "Perfil") {
+            iconName = focused ? "person" : "person-outline";
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: "#007aff",
+        tabBarInactiveTintColor: "#aeb6bf",
+        tabBarStyle: {
+          paddingBottom: 5,
+          height: 60,
+        },
+      })}
+    >
+      <Tab.Screen name="Inicio" component={DashboardScreen} />
+      <Tab.Screen name="Servicios" component={ServicesScreen} />
+    </Tab.Navigator>
+  );
+};
+
+export default TabNavigator;
