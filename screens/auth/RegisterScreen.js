@@ -39,9 +39,11 @@ const RegisterScreen = () => {
   return (
     <View style={styles.container}>
       {/* Título */}
+       {loading && <Text>Cargando...</Text>} 
+       /*Indicador de carga, edita esto Michi */
+
       <Text style={styles.title}>Registro</Text>
-      
-      {/* Campo de Email */}
+
       <Text style={styles.label}>E-mail</Text>
       <TextInput
         style={styles.input}

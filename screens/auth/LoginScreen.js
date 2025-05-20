@@ -5,21 +5,39 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { loginWithEmail } from "../../firebase/authService";
 
 const LoginScreen = () => {
-  // Estados para almacenar lo que el usuario escribe
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
   const navigation = useNavigation();
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Por favor, completa todos los campos");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await loginWithEmail(email, password);
+      navigation.navigate("Dashboard");
+    } catch (error) {
+      Alert.alert("Error al iniciar sesión", error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
-      {/* Título "Login" centrado */}
       <Text style={styles.loginTitle}>Login</Text>
 
-      {/* Campo de Email */}
       <Text style={styles.inputLabel}>Correo Electrónico</Text>
       <TextInput
         style={styles.input}
@@ -30,7 +48,6 @@ const LoginScreen = () => {
         autoCapitalize="none"
       />
 
-      {/* Campo de Contraseña */}
       <Text style={styles.inputLabel}>Contraseña</Text>
       <TextInput
         style={styles.input}
@@ -40,18 +57,18 @@ const LoginScreen = () => {
         secureTextEntry
       />
 
-      {/* Botón "Entrar" */}
-      <TouchableOpacity
-        style={styles.loginButton}
-        onPress={() => navigation.navigate("Dashboard")}
-      >
-        <Text style={styles.buttonText}>Entrar</Text>
-      </TouchableOpacity>
+      {loading ? (
+        <ActivityIndicator size="large" color="#007bff" />
+      ) : (
+        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+          <Text style={styles.buttonText}>Entrar</Text>
+        </TouchableOpacity>
+      )}
 
-      {/* Enlace "Crea una cuenta" */}
       <TouchableOpacity
         style={styles.createAccountLink}
         onPress={() => navigation.navigate("Register")}
+        disabled={loading}
       >
         <Text style={styles.linkText}>Crea una cuenta</Text>
       </TouchableOpacity>
