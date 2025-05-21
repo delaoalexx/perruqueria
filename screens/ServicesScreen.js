@@ -5,9 +5,9 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 
 const ServiceCard = ({ title, price, time, onPress }) => {
   return (
@@ -19,10 +19,20 @@ const ServiceCard = ({ title, price, time, onPress }) => {
       </View>
       <View style={styles.serviceActions}>
         {title.includes("Corte") && (
-          <Ionicons name="cut-outline" size={24} color="#333" style={styles.serviceIcon} />
+          <Ionicons
+            name="cut-outline"
+            size={24}
+            color="#333"
+            style={styles.serviceIcon}
+          />
         )}
         {title.includes("Baño") && (
-          <Ionicons name="water-outline" size={24} color="#333" style={styles.serviceIcon} />
+          <Ionicons
+            name="water-outline"
+            size={24}
+            color="#333"
+            style={styles.serviceIcon}
+          />
         )}
         <TouchableOpacity style={styles.scheduleButton} onPress={onPress}>
           <Text style={styles.scheduleButtonText}>Agendar</Text>
@@ -33,6 +43,7 @@ const ServiceCard = ({ title, price, time, onPress }) => {
 };
 
 const ServicesScreen = () => {
+  const navigation = useNavigation();
   const services = [
     {
       id: 1,
@@ -62,7 +73,11 @@ const ServicesScreen = () => {
 
   const handleSchedule = (serviceId) => {
     console.log(`Agendar servicio con ID: ${serviceId}`);
-    // Aquí puedes implementar la lógica para agendar el servicio
+    const selectedService = services.find(
+      (service) => service.id === serviceId
+    );
+    // Navega a la pantalla de agendar cita y pasa los datos del servicio
+    navigation.navigate("ScheduleAppointment", { service: selectedService });
   };
 
   return (
@@ -110,9 +125,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 20,
     marginBottom: 15,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -137,7 +152,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   serviceActions: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   serviceIcon: {
     marginBottom: 10,

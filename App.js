@@ -4,8 +4,8 @@ import { NavigationContainer } from "@react-navigation/native";
 import WelcomeScreen from "./screens/auth/WelcomeScreen";
 import LoginScreen from "./screens/auth/LoginScreen";
 import RegisterScreen from "./screens/auth/RegisterScreen";
-import DashboardScreen from "./screens/DashboardScreen";
 import TabNavigator from "./navigation/TabNavigator";
+import ScheduleScreen from "./screens/ScheduleScreen";
 
 const Stack = createStackNavigator();
 
@@ -31,6 +31,11 @@ export default function App() {
         <Stack.Screen
           name="Dashboard"
           component={TabNavigator}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="ScheduleAppointment"
+          component={ScheduleScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
