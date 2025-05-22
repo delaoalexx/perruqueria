@@ -9,13 +9,15 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { loginWithEmail } from "../../firebase/authService";
+import { loginWithEmail, useGoogleAuth } from "../../firebase/authService"; // <- usa el hook, no la función directa
 
 const LoginScreen = () => {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const navigation = useNavigation();
+
+  const { signInWithGoogle } = useGoogleAuth(); // a a i i tuki tuki
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -29,6 +31,19 @@ const LoginScreen = () => {
       navigation.replace("Dashboard");
     } catch (error) {
       Alert.alert("Error al iniciar sesión", error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      const user = await signInWithGoogle();
+      console.log("Usuario de Google:", user);
+      navigation.replace("Dashboard");
+    } catch (error) {
+      Alert.alert("Error con Google", error.message);
     } finally {
       setLoading(false);
     }
@@ -60,9 +75,15 @@ const LoginScreen = () => {
       {loading ? (
         <ActivityIndicator size="large" color="#007bff" />
       ) : (
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Entrar</Text>
-        </TouchableOpacity>
+        <>
+          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+            <Text style={styles.buttonText}>Entrar</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
+            <Text style={styles.buttonText}>Iniciar con Google</Text>
+          </TouchableOpacity>
+        </>
       )}
 
       <TouchableOpacity
@@ -76,7 +97,6 @@ const LoginScreen = () => {
   );
 };
 
-// Estilos para el login
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -108,6 +128,14 @@ const styles = StyleSheet.create({
   loginButton: {
     height: 50,
     backgroundColor: "#3498db",
+    borderRadius: 5,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  googleButton: {
+    height: 50,
+    backgroundColor: "#db4437", // rojo Google
     borderRadius: 5,
     justifyContent: "center",
     alignItems: "center",
