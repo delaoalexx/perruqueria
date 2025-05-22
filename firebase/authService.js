@@ -17,11 +17,13 @@ export const useGoogleAuth = () => {
   const redirectUri = 'http://localhost:8081'; 
   const expoClientId = process.env.EXPO_PUBLIC_GOOGLE_EXPO_CLIENT_ID;
   const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+  const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_EXPO_CLIENT_ID;
   
 
   const [request, response, promptAsync] = Google.useAuthRequest({
   webClientId,
   redirectUri,
+  iosClientId,
 
   
 });
