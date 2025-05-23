@@ -27,7 +27,7 @@ export const useGoogleAuth = () => {
   const expoClientId = process.env.EXPO_PUBLIC_GOOGLE_EXPO_CLIENT_ID;
   const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
   const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_EXPO_CLIENT_ID;
-  const androidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
+  const androidClientId = process.env.EXPO_PUBLIC_GOOGLE_EXPO_CLIENT_ID; // Para dev EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     webClientId,
