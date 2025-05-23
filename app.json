@@ -27,6 +27,9 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
+
+    "scheme": "perruqueria",
+    
     "extra": {
       "eas": {
         "projectId": "09879ff2-7f48-4120-acd1-73350128ba72"
