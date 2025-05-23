@@ -14,23 +14,35 @@ import { loginWithEmail, useGoogleAuth } from "../../firebase/authService"; // <
 const LoginScreen = () => {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [emailError, setEmailError] = React.useState("");
+  const [passwordError, setPasswordError] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const navigation = useNavigation();
 
   const { signInWithGoogle } = useGoogleAuth(); // a a i i tuki tuki
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert("Error", "Por favor, completa todos los campos");
-      return;
-    }
+    setEmailError("");
+    setPasswordError("");
+
+    if (!email) setEmailError("El correo es requerido.");
+    if (!password) setPasswordError("La contraseña es requerida.");
+    if (!email || !password) return;
 
     setLoading(true);
     try {
       await loginWithEmail(email, password);
       navigation.replace("Dashboard");
     } catch (error) {
-      Alert.alert("Error al iniciar sesión", error.message);
+      if (
+        error.code === "auth/user-not-found" ||
+        error.code === "auth/wrong-password"
+      ) {
+        setEmailError("Correo o contraseña incorrectos.");
+        setPasswordError(" ");
+      } else {
+        Alert.alert("Error al iniciar sesión", error.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -55,22 +67,26 @@ const LoginScreen = () => {
 
       <Text style={styles.inputLabel}>Correo Electrónico</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, emailError ? styles.inputError : null]}
         placeholder="Introduce tu correo"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
       />
+      {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
 
       <Text style={styles.inputLabel}>Contraseña</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, passwordError ? styles.inputError : null]}
         placeholder="Introduce tu contraseña"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
+      {passwordError ? (
+        <Text style={styles.errorText}>{passwordError}</Text>
+      ) : null}
 
       {loading ? (
         <ActivityIndicator size="large" color="#007bff" />
@@ -80,7 +96,10 @@ const LoginScreen = () => {
             <Text style={styles.buttonText}>Entrar</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
+          <TouchableOpacity
+            style={styles.googleButton}
+            onPress={handleGoogleLogin}
+          >
             <Text style={styles.buttonText}>Iniciar con Google</Text>
           </TouchableOpacity>
         </>
@@ -153,6 +172,15 @@ const styles = StyleSheet.create({
   linkText: {
     color: "#3498db",
     fontSize: 16,
+  },
+  inputError: {
+    borderColor: "#e74c3c",
+  },
+  errorText: {
+    color: "#e74c3c",
+    marginBottom: 10,
+    marginTop: -15,
+    fontSize: 13,
   },
 });
 
