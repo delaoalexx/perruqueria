@@ -175,8 +175,10 @@ const ScheduleScreen = () => {
             </Text>
           </View>
         </View>
+      </ScrollView>
 
-        {/* Botones de acción */}
+      {/* Botones Inferiores */}
+      <View style={styles.actionButtonsContainer}>
         <View style={styles.actionButtons}>
           <TouchableOpacity
             style={styles.cancelButton}
@@ -184,14 +186,11 @@ const ScheduleScreen = () => {
           >
             <Text style={styles.cancelButtonText}>Cancelar</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.confirmButton}
-            onPress={handleConfirm}
-          >
+          <TouchableOpacity style={styles.confirmButton}>
             <Text style={styles.confirmButtonText}>Confirmar</Text>
           </TouchableOpacity>
         </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };
@@ -204,7 +203,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
-    padding: 30,
+    padding: 20,
+    marginTop: 20,
   },
   header: {
     flexDirection: "row",
@@ -294,11 +294,16 @@ const styles = StyleSheet.create({
     textAlign: "center",
     padding: 20,
   },
+  actionButtonsContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    paddingTop: 10,
+  },
   actionButtons: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 20,
-    marginBottom: 30,
+    marginTop: 10,
+    marginBottom: 10,
   },
   cancelButton: {
     backgroundColor: "#f0f0f0",

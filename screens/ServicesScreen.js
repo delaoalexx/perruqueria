@@ -107,7 +107,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
-    padding: 30,
+    padding: 20,
+    marginTop: 20,
   },
   sectionHeader: {
     marginBottom: 20,

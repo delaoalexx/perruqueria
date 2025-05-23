@@ -6,6 +6,7 @@ import LoginScreen from "./screens/auth/LoginScreen";
 import RegisterScreen from "./screens/auth/RegisterScreen";
 import TabNavigator from "./navigation/TabNavigator";
 import ScheduleScreen from "./screens/ScheduleScreen";
+import AddPetScreen from "./screens/AddPetScreen";
 
 const Stack = createStackNavigator();
 
@@ -36,6 +37,11 @@ export default function App() {
         <Stack.Screen
           name="ScheduleAppointment"
           component={ScheduleScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="AddPet"
+          component={AddPetScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
