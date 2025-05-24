@@ -7,6 +7,7 @@ import RegisterScreen from "./screens/auth/RegisterScreen";
 import TabNavigator from "./navigation/TabNavigator";
 import ScheduleScreen from "./screens/ScheduleScreen";
 import AddPetScreen from "./screens/AddPetScreen";
+import Toast from "react-native-toast-message";
 
 const Stack = createStackNavigator();
 
@@ -45,6 +46,7 @@ export default function App() {
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
+      <Toast />
     </NavigationContainer>
   );
 }

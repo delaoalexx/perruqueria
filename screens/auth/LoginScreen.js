@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { loginWithEmail, useGoogleAuth } from "../../firebase/authService"; // <- usa el hook, no la función directa
+import Toast from "react-native-toast-message";
 
 const LoginScreen = () => {
   const [email, setEmail] = React.useState("");
@@ -21,13 +22,34 @@ const LoginScreen = () => {
 
   const { signInWithGoogle } = useGoogleAuth(); // a a i i tuki tuki
 
+  // Función para validar formato de email
+  const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
   const handleLogin = async () => {
     setEmailError("");
     setPasswordError("");
 
-    if (!email) setEmailError("El correo es requerido.");
-    if (!password) setPasswordError("La contraseña es requerida.");
-    if (!email || !password) return;
+    let isValid = true;
+
+    // Validación de email
+    if (!email) {
+      setEmailError("El correo es requerido.");
+      isValid = false;
+    } else if (!validateEmail(email)) {
+      setEmailError("Ingresa un correo válido");
+      isValid = false;
+    }
+
+    // Validación de contraseña
+    if (!password) {
+      setPasswordError("La contraseña es requerida.");
+      isValid = false;
+    }
+
+    if (!isValid) return;
 
     setLoading(true);
     try {
@@ -35,11 +57,35 @@ const LoginScreen = () => {
       navigation.replace("Dashboard");
     } catch (error) {
       if (
+        error.code === "auth/invalid-credential" ||
+        error.code === "auth/invalid-login-credentials" ||
         error.code === "auth/user-not-found" ||
         error.code === "auth/wrong-password"
       ) {
-        setEmailError("Correo o contraseña incorrectos.");
-        setPasswordError(" ");
+        Toast.show({
+          type: "error",
+          text1: "Error de inicio de sesión",
+          text2: "Correo o contraseña incorrectos.",
+          position: "top",
+          visibilityTime: 3000,
+          text1Style: {
+            fontSize: 18,
+            fontWeight: "bold",
+          },
+          text2Style: {
+            fontSize: 12,
+          },
+          props: {
+            style: {
+              height: 80,
+              paddingHorizontal: 20,
+              paddingVertical: 15,
+              marginHorizontal: 10,
+            },
+          },
+        });
+      } else if (error.code === "auth/invalid-email") {
+        setEmailError("Correo electrónico inválido");
       } else {
         Alert.alert("Error al iniciar sesión", error.message);
       }
