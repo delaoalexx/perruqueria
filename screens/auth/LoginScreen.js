@@ -9,7 +9,8 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { loginWithEmail, useGoogleAuth } from "../../firebase/authService"; // <- usa el hook, no la función directa
+import { useEmailAuth } from '../../hooks/auth/useEmailAuth';
+import { useGoogleAuth } from '../../hooks/auth/useGoogleAuth';
 import Toast from "react-native-toast-message";
 
 const LoginScreen = () => {
@@ -20,6 +21,7 @@ const LoginScreen = () => {
   const [loading, setLoading] = React.useState(false);
   const navigation = useNavigation();
 
+  const { loginWithEmail } = useEmailAuth();
   const { signInWithGoogle } = useGoogleAuth(); // a a i i tuki tuki
 
   // Función para validar formato de email

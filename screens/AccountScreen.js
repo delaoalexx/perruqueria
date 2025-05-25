@@ -9,14 +9,22 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { auth } from "../firebase/firebaseConfig";
+import { useLogout } from "../hooks/auth/useLogout"; 
+
 
 const AccountScreen = () => {
   const navigation = useNavigation();
+  const { logout } = useLogout();
   const user = auth.currentUser;
   const email = user?.email || "usuario@email.com";
 
-  const handleLogout = () => {
-    navigation.replace("Login");
+  const handleLogout = async () => {
+    try {
+      await logout(); // Aqui se usa el hook desde /hooks/auth/useLogout.js
+      navigation.replace("Login");
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+    }
   };
 
   const handleAddPet = () => {
