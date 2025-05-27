@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { addPet } from '../../services/petService';
+import { addPet } from '../../services/petsService';
 
 const useAddPet = () => {
   const [loading, setLoading] = useState(false);

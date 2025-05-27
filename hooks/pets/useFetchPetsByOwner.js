@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getPetsByOwner } from '../../services/petService';
+import { getPetsByOwner } from '../../services/petsService';
 
 const useFetchPetsByOwner = (uid) => {
   const [pets, setPets] = useState([]);

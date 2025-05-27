@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { deletePet } from '../../services/petService';
+import { deletePet } from '../../services/petsService';
 
 const useDeletePet = () => {
   const [loading, setLoading] = useState(false);
