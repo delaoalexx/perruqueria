@@ -55,7 +55,9 @@ const LoginScreen = () => {
 
     setLoading(true);
     try {
-      await loginWithEmail(email, password);
+      await loginWithEmail(email, password).then((userCredential) => {
+        console.log("Usuario autenticado:", userCredential.user.uid);
+      });
       navigation.replace("Dashboard");
     } catch (error) {
       if (

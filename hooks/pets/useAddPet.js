@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { addPet } from '../../services/petsService';
 
-const useAddPet = () => {
+export const useAddPet = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -19,4 +19,4 @@ const useAddPet = () => {
   return { createPet, loading, error };
 };
 
-export default useAddPet;
+
