@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { addPet } from "../services/petsService"; // Importa la función
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const AddPetScreen = ({ navigation }) => {
   const [selections, setSelections] = useState({});
@@ -17,42 +18,46 @@ const AddPetScreen = ({ navigation }) => {
   const [raza, setRaza] = useState("");
   const [edad, setEdad] = useState("");
 
- const handleSave = async () => {
-  // Validación básica
-  if (
-    !selections.tipo ||
-    !nombre ||
-    !selections.genero ||
-    !raza ||
-    !selections.tamaño ||
-    !edad ||
-    !selections.unidadEdad
-  ) {
-    Alert.alert("Completa todos los campos");
-    return;
-  }
+  const handleSave = async () => {
+    // Validación básica
+    if (
+      !selections.tipo ||
+      !nombre ||
+      !selections.genero ||
+      !raza ||
+      !selections.tamaño ||
+      !edad ||
+      !selections.unidadEdad
+    ) {
+      Alert.alert("Completa todos los campos");
+      return;
+    }
 
-  const petData = {
-    type: selections.tipo === "Perro" ? "Dog" : "Cat",
-    name: nombre,
-    gender: selections.genero === "Macho" ? "Male" : "Female",
-    breed: raza,
-    ownerId: "", // Reemplaza esto por el UID real del usuario autenticado
-    picUrl: "", // Puedes poner aquí la URL de la foto si la tienes
-    age: {
-      number: Number(edad),
-      unit: selections.unidadEdad.toLowerCase() === "año(s)" ? "años" : "meses",
-    },
+    // Obtener el UID del usuario autenticado
+    const ownerId = await AsyncStorage.getItem("userUid");
+
+    const petData = {
+      type: selections.tipo === "Perro" ? "Dog" : "Cat",
+      name: nombre,
+      gender: selections.genero === "Macho" ? "Male" : "Female",
+      breed: raza,
+      ownerId: ownerId || "", // Reemplaza esto por el UID real del usuario autenticado
+      picUrl: "", // Puedes poner aquí la URL de la foto si la tienes
+      age: {
+        number: Number(edad),
+        unit:
+          selections.unidadEdad.toLowerCase() === "año(s)" ? "años" : "meses",
+      },
+    };
+
+    try {
+      await addPet(petData);
+      navigation.goBack();
+    } catch (error) {
+      Alert.alert("Error", "No se pudo guardar la mascota");
+      console.error(error);
+    }
   };
-
-  try {
-    await addPet(petData);
-    navigation.goBack();
-  } catch (error) {
-    Alert.alert("Error", "No se pudo guardar la mascota");
-    console.error(error);
-  }
-};
 
   return (
     <View style={styles.safeArea}>
@@ -124,9 +129,7 @@ const AddPetScreen = ({ navigation }) => {
                   styles.optionButton,
                   selections.genero === opcion && styles.selectedOption,
                 ]}
-                onPress={() =>
-                  setSelections({ ...selections, genero: opcion })
-                }
+                onPress={() => setSelections({ ...selections, genero: opcion })}
               >
                 <Text
                   style={[
@@ -160,9 +163,7 @@ const AddPetScreen = ({ navigation }) => {
                   styles.optionButton,
                   selections.tamaño === opcion && styles.selectedOption,
                 ]}
-                onPress={() =>
-                  setSelections({ ...selections, tamaño: opcion })
-                }
+                onPress={() => setSelections({ ...selections, tamaño: opcion })}
               >
                 <Text
                   style={[

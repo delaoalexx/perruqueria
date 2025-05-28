@@ -9,9 +9,10 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { useEmailAuth } from '../../hooks/auth/useEmailAuth';
-import { useGoogleAuth } from '../../hooks/auth/useGoogleAuth';
+import { useEmailAuth } from "../../hooks/auth/useEmailAuth";
+import { useGoogleAuth } from "../../hooks/auth/useGoogleAuth";
 import Toast from "react-native-toast-message";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const LoginScreen = () => {
   const [email, setEmail] = React.useState("");
@@ -55,8 +56,10 @@ const LoginScreen = () => {
 
     setLoading(true);
     try {
-      await loginWithEmail(email, password).then((userCredential) => {
-        console.log("Usuario autenticado:", userCredential.user.uid);
+      await loginWithEmail(email, password).then(async (userCredential) => {
+        const uid = userCredential.user.uid;
+        await AsyncStorage.setItem("userUid", uid);
+        console.log("Usuario autenticado:", uid);
       });
       navigation.replace("Dashboard");
     } catch (error) {
