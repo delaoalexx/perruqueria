@@ -13,9 +13,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 export const useGoogleAuth = () => {
   const [userInfo, setUserInfo] = useState(null);
-
   const redirectUri = AuthSession.makeRedirectUri({ useProxy: true });
-
   const expoClientId = process.env.EXPO_PUBLIC_GOOGLE_EXPO_CLIENT_ID;
   const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
   const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_EXPO_CLIENT_ID;
@@ -60,10 +58,17 @@ export const useGoogleAuth = () => {
       if (result?.type === 'success' && result.authentication) {
         const { idToken, accessToken } = result.authentication;
         const credential = GoogleAuthProvider.credential(idToken, accessToken);
-        await signInWithCredential(auth, credential);
+        
+        // Aquí está la clave: devolver el resultado de signInWithCredential
+        const userCredential = await signInWithCredential(auth, credential);
+        
         await getUserInfo(accessToken);
+        
+        // Devolver el userCredential para que pueda ser usado en el LoginScreen
+        return userCredential;
       } else if (result?.type === 'cancel') {
         console.log('Usuario canceló el login');
+        throw new Error('Usuario canceló el login');
       } else {
         throw new Error('Google sign-in failed or was cancelled');
       }

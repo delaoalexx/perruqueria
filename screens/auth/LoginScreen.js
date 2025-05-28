@@ -104,12 +104,23 @@ const LoginScreen = () => {
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
-      const user = await signInWithGoogle();
-      console.log("Usuario de Google:", user).then((userCredential) => {
-        console.log("Usuario autenticado:", userCredential.user.uid);
-      });
-      navigation.replace("Dashboard");
+      const userCredential = await signInWithGoogle();
+
+      if (userCredential && userCredential.user) {
+        const uid = userCredential.user.uid;
+
+        // Guardar el UID en AsyncStorage
+        await AsyncStorage.setItem("userUid", uid);
+
+        console.log("Usuario de Google autenticado:", uid);
+
+        // Navegar al Dashboard
+        navigation.replace("Dashboard");
+      } else {
+        throw new Error("No se pudo obtener la información del usuario");
+      }
     } catch (error) {
+      console.error("Error completo:", error);
       Alert.alert("Error con Google", error.message);
     } finally {
       setLoading(false);
