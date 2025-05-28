@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   StyleSheet,
   View,
@@ -9,8 +9,9 @@ import {
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { auth } from "../firebase/firebaseConfig";
-import { useLogout } from "../hooks/auth/useLogout"; 
-
+import { useLogout } from "../hooks/auth/useLogout";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getPetsByOwner } from "../services/petsService";
 
 const AccountScreen = () => {
   const navigation = useNavigation();
@@ -18,17 +19,30 @@ const AccountScreen = () => {
   const user = auth.currentUser;
   const email = user?.email || "usuario@email.com";
 
+  const [pets, setPets] = useState([]);
+
+  // Cargar mascotas del usuario autenticado
+  const loadPets = useCallback(async () => {
+    const ownerId = await AsyncStorage.getItem("userUid");
+    if (ownerId) {
+      const petsList = await getPetsByOwner(ownerId);
+      setPets(petsList);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPets();
+    const unsubscribe = navigation.addListener("focus", loadPets);
+    return unsubscribe;
+  }, [navigation, loadPets]);
+
   const handleLogout = async () => {
     try {
-      await logout(); // Aqui se usa el hook desde /hooks/auth/useLogout.js
+      await logout();
       navigation.replace("Login");
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
     }
-  };
-
-  const handleAddPet = () => {
-    // Lógica para agregar mascota
   };
 
   return (
@@ -58,9 +72,33 @@ const AccountScreen = () => {
           </TouchableOpacity>
         </View>
 
-        <View style={[styles.card, styles.petCard]}>
-          <Text style={styles.emptyPetsText}>No tienes mascotas</Text>
-        </View>
+        {pets.length === 0 ? (
+          <View style={[styles.card, styles.petCard]}>
+            <Text style={styles.emptyPetsText}>No tienes mascotas</Text>
+          </View>
+        ) : (
+          pets.map((pet) => (
+            <View
+              key={pet.id}
+              style={[
+                styles.card,
+                styles.petCard,
+                { flexDirection: "row", alignItems: "center", marginBottom: 10 },
+              ]}
+            >
+              <View style={styles.petAvatar}>
+                <Ionicons name="paw" size={32} color="#fff" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.petName}>{pet.name}</Text>
+                <Text style={styles.petInfo}>
+                  {pet.type === "Dog" ? "Perro" : "Gato"} • {pet.breed}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={28} color="#fff" />
+            </View>
+          ))
+        )}
 
         {/* Sección de Configuración */}
         <View style={styles.sectionHeader}>
@@ -163,6 +201,8 @@ const styles = StyleSheet.create({
   },
   petCard: {
     backgroundColor: "#007aff",
+    paddingVertical: 18,
+    paddingHorizontal: 18,
   },
   cardContent: {
     flexDirection: "row",
@@ -173,6 +213,15 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 25,
     backgroundColor: "rgba(255, 255, 255, 0.3)",
+    marginRight: 15,
+  },
+  petAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 15,
   },
   textContainer: {
@@ -187,6 +236,16 @@ const styles = StyleSheet.create({
   userEmail: {
     fontSize: 14,
     color: "rgba(255, 255, 255, 0.8)",
+  },
+  petName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#fff",
+  },
+  petInfo: {
+    fontSize: 15,
+    color: "#fff",
+    opacity: 0.85,
   },
   emptyPetsText: {
     fontSize: 16,

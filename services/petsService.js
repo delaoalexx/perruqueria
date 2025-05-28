@@ -17,7 +17,7 @@ export const getPets = async () => {
 };
 
 export const getPetsByOwner = async (uid) => {
-  const q = query(petsCollection, where("propietarioId", "==", uid));
+  const q = query(petsCollection, where("ownerId", "==", uid));
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
