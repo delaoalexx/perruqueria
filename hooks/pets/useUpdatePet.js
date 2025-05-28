@@ -7,10 +7,14 @@ const useUpdatePet = () => {
 
   const editPet = async (id, updatedData) => {
     setLoading(true);
+    setError(null); // ✅ Limpiar error anterior
+    
     try {
-      await updatePet(id, updatedData);
+      const result = await updatePet(id, updatedData);
+      return result; // ✅ Retornar el resultado
     } catch (err) {
-      setError(err);
+      setError(err.message || 'Error al actualizar la mascota'); // ✅ Extraer mensaje del error
+      throw err; // ✅ Re-lanzar el error
     } finally {
       setLoading(false);
     }
