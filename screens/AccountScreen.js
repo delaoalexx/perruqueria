@@ -12,6 +12,7 @@ import { auth } from "../firebase/firebaseConfig";
 import { useLogout } from "../hooks/auth/useLogout";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getPetsByOwner } from "../services/petsService";
+import { Alert } from "react-native";
 
 const AccountScreen = () => {
   const navigation = useNavigation();
@@ -37,12 +38,27 @@ const AccountScreen = () => {
   }, [navigation, loadPets]);
 
   const handleLogout = async () => {
-    try {
-      await logout();
-      navigation.replace("Login");
-    } catch (error) {
-      console.error("Error al cerrar sesión:", error);
-    }
+    Alert.alert("Cerrar Sesión", "¿Estás seguro de que deseas cerrar sesión?", [
+      {
+        text: "Cancelar",
+        style: "cancel",
+      },
+      {
+        text: "Cerrar Sesión",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await AsyncStorage.removeItem("userUid");
+            const removedUid = await AsyncStorage.getItem("userUid");
+            console.log("UID después de cerrar sesión:", removedUid);
+            await logout();
+            navigation.replace("Login");
+          } catch (error) {
+            console.error("Error al cerrar sesión:", error);
+          }
+        },
+      },
+    ]);
   };
 
   return (
@@ -83,7 +99,11 @@ const AccountScreen = () => {
               style={[
                 styles.card,
                 styles.petCard,
-                { flexDirection: "row", alignItems: "center", marginBottom: 10 },
+                {
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginBottom: 10,
+                },
               ]}
             >
               <View style={styles.petAvatar}>
