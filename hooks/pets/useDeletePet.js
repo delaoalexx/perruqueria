@@ -7,10 +7,13 @@ const useDeletePet = () => {
 
   const removePet = async (id) => {
     setLoading(true);
+    setError(null); // ✅ Limpiar error anterior
     try {
-      await deletePet(id);
+      const result = await deletePet(id);
+      return result; // ✅ Retornar el resultado 
     } catch (err) {
-      setError(err);
+      setError(err.message || 'Error al eliminar la mascota'); // ✅ Extraer mensaje del error
+      throw err; // ✅ Re-lanzar el error
     } finally {
       setLoading(false);
     }
