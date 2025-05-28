@@ -22,6 +22,40 @@ const DashboardScreen = () => {
         />
         <Text style={styles.title}>Perruqueria</Text>
       </View>
+
+      <Text style={styles.date}>Próxima cita</Text>
+            <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle}>Corte de cabello</Text>
+          <View style={styles.icons}>
+            <TouchableOpacity>
+              <Text style={styles.pIcon}>🐾</Text>
+            </TouchableOpacity>
+            <TouchableOpacity>
+             
+            </TouchableOpacity>
+          </View>
+        </View>
+        <Text style={styles.status}>Confirmada</Text>
+        <Text style={styles.time}>Mañana, 10:00 AM</Text>
+</View>
+
+
+{/* h */}
+
+<Text style={styles.sectionTitle}>Mis mascotas</Text>
+<ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carousel}>
+  <View style={styles.petCard}>
+    <Image source={require("../assets/iconDog.png")} style={styles.petImage} />
+    <Text style={styles.petName}>Max</Text>
+  </View>
+  <View style={styles.petCard}>
+    <Image source={require("../assets/iconApp.jpeg")} style={styles.petImage} />
+    <Text style={styles.petName}>Luna</Text>
+  </View>
+  {/* Agrega más mascotas aquí */}
+</ScrollView>
+
     </ScrollView>
   );
 };
@@ -46,7 +80,102 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     resizeMode: 'contain',
-  }
+  },
+  card: {
+  backgroundColor: "#fff",
+  borderRadius: 10,
+  padding: 15,
+  marginTop: 20,
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 5,
+  elevation: 3,
+},
+
+cardHeader: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+},
+
+cardTitle: {
+  fontWeight: "bold",
+  fontSize: 16,
+  color: "#000",
+},
+
+// icons: {
+//   flexDirection: "row",
+//   gap: 10,
+// },
+
+// editIcon: {
+//   fontSize: 16,
+//   color: "#555",
+//   marginRight: 10,
+// },
+
+// deleteIcon: {
+//   fontSize: 16,
+//   color: "red",
+// },
+
+status: {
+  marginTop: 8,
+  fontSize: 14,
+  color: "#333",
+},
+
+time: {
+  fontSize: 14,
+  color: "#555",
+},
+
+
+
+
+
+sectionTitle: {
+  fontSize: 20,
+  fontWeight: "bold",
+  marginTop: 30,
+  marginBottom: 10,
+  color: "#333",
+},
+
+carousel: {
+  flexDirection: "row",
+},
+
+petCard: {
+  width: 120,
+  marginRight: 15,
+  backgroundColor: "#fff",
+  borderRadius: 10,
+  padding: 10,
+  alignItems: "center",
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 4,
+  elevation: 3,
+},
+
+petImage: {
+  width: 80,
+  height: 80,
+  borderRadius: 40,
+  resizeMode: "cover",
+  marginBottom: 8,
+},
+
+petName: {
+  fontSize: 14,
+  fontWeight: "600",
+  color: "#444",
+},
+
 });
 
 export default DashboardScreen;
