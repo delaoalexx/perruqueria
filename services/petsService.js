@@ -5,7 +5,11 @@ const petsCollection = collection(db, 'pets');
 
 // CRUD
 
-export const addPet = async (petData) => await addDoc(petsCollection, petData);
+export const addPet = async (petData) => {
+  const docRef = await addDoc(petsCollection, petData);
+  return docRef.id; // devuelve el ID del nuevo documento
+};
+
 
 export const getPets = async () => {
   const snapshot = await getDocs(petsCollection);

@@ -105,7 +105,9 @@ const LoginScreen = () => {
     setLoading(true);
     try {
       const user = await signInWithGoogle();
-      console.log("Usuario de Google:", user);
+      console.log("Usuario de Google:", user).then((userCredential) => {
+        console.log("Usuario autenticado:", userCredential.user.uid);
+      });
       navigation.replace("Dashboard");
     } catch (error) {
       Alert.alert("Error con Google", error.message);
