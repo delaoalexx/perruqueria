@@ -94,8 +94,9 @@ const AccountScreen = () => {
           </View>
         ) : (
           pets.map((pet) => (
-            <View
+            <TouchableOpacity
               key={pet.id}
+              onPress={() => navigation.navigate("PetDetails", { pet })}
               style={[
                 styles.card,
                 styles.petCard,
@@ -116,7 +117,7 @@ const AccountScreen = () => {
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={28} color="#fff" />
-            </View>
+            </TouchableOpacity>
           ))
         )}
 

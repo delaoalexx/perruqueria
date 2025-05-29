@@ -7,6 +7,7 @@ import {
   ScrollView,
   TextInput,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { addPet } from "../services/petsService"; // Importa la función
@@ -17,6 +18,7 @@ const AddPetScreen = ({ navigation }) => {
   const [nombre, setNombre] = useState("");
   const [raza, setRaza] = useState("");
   const [edad, setEdad] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSave = async () => {
     // Validación básica
@@ -33,6 +35,8 @@ const AddPetScreen = ({ navigation }) => {
       return;
     }
 
+    setLoading(true);
+
     // Obtener el UID del usuario autenticado
     const ownerId = await AsyncStorage.getItem("userUid");
 
@@ -42,7 +46,8 @@ const AddPetScreen = ({ navigation }) => {
       gender: selections.genero === "Macho" ? "Male" : "Female",
       breed: raza,
       ownerId: ownerId || "", // Reemplaza esto por el UID real del usuario autenticado
-      picUrl: "", // Puedes poner aquí la URL de la foto si la tienes
+      picUrl: "",
+      size: selections.tamaño,
       age: {
         number: Number(edad),
         unit:
@@ -56,6 +61,8 @@ const AddPetScreen = ({ navigation }) => {
     } catch (error) {
       Alert.alert("Error", "No se pudo guardar la mascota");
       console.error(error);
+    } finally {
+      setLoading(false); // <-- Finaliza la carga
     }
   };
 
