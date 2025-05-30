@@ -34,6 +34,14 @@ const ServiceCard = ({ title, price, time, onPress }) => {
             style={styles.serviceIcon}
           />
         )}
+        {title.includes("Tratamiento") && (
+          <Ionicons
+            name="bug-outline"
+            size={24}
+            color="#333"
+            style={styles.serviceIcon}
+          />
+        )}
         <TouchableOpacity style={styles.scheduleButton} onPress={onPress}>
           <Text style={styles.scheduleButtonText}>Agendar</Text>
         </TouchableOpacity>
@@ -47,7 +55,7 @@ const ServicesScreen = () => {
   const services = [
     {
       id: 1,
-      title: "Corte de cabello",
+      title: "Corte de pelo",
       price: "900",
       time: "90",
     },
@@ -66,6 +74,12 @@ const ServicesScreen = () => {
     {
       id: 4,
       title: "Baño especial",
+      price: "900",
+      time: "30",
+    },
+    {
+      id: 5,
+      title: "Tratamiento antipulgas",
       price: "900",
       time: "30",
     },
@@ -112,6 +126,7 @@ const styles = StyleSheet.create({
   },
   sectionHeader: {
     marginBottom: 20,
+    paddingTop: 10,
   },
   sectionTitle: {
     fontSize: 24,
