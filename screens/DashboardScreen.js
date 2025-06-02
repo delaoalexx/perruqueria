@@ -8,6 +8,7 @@ import {
   Image
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getPetsByOwner } from "../services/petsService";
 
@@ -64,7 +65,13 @@ const DashboardScreen = () => {
                 style={styles.petCard}
                 onPress={() => navigation.navigate("PetDetails", { pet })}
               >
-                <Image source={require("../assets/iconDog.png")} style={styles.petImage} />
+                {pet.picUrl ? (
+                  <Image source={{ uri: pet.picUrl }} style={styles.petImage} />
+                ) : (
+                  <View style={styles.defaultPetImage}>
+                    <Ionicons name="paw" size={32} color="#666" />
+                  </View>
+                )}
                 <Text style={styles.petName}>{pet.name}</Text>
                 <Text style={styles.petInfo}>
                   {pet.type === "Dog" ? "Perro" : "Gato"} • {pet.breed}
@@ -168,6 +175,15 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     resizeMode: "cover",
+    marginBottom: 8,
+  },
+  defaultPetImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#f0f0f0",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 8,
   },
   petName: {
