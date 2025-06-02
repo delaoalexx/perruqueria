@@ -1,16 +1,31 @@
-import React from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Image
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Image } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getPetsByOwner } from "../services/petsService";
 
 const DashboardScreen = () => {
   const navigation = useNavigation();
+  const [pets, setPets] = useState([]);
+
+  const loadPets = useCallback(async () => {
+    const ownerId = await AsyncStorage.getItem("userUid");
+    if (ownerId) {
+      const petsList = await getPetsByOwner(ownerId);
+      setPets(petsList);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPets();
+  }, [loadPets]);
 
   return (
     <ScrollView style={styles.container}>
@@ -24,38 +39,41 @@ const DashboardScreen = () => {
       </View>
 
       <Text style={styles.date}>Próxima cita</Text>
-            <View style={styles.card}>
+      <View style={styles.card}>
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>Corte de cabello</Text>
           <View style={styles.icons}>
             <TouchableOpacity>
               <Text style={styles.pIcon}>🐾</Text>
             </TouchableOpacity>
-            <TouchableOpacity>
-             
-            </TouchableOpacity>
           </View>
         </View>
         <Text style={styles.status}>Confirmada</Text>
         <Text style={styles.time}>Mañana, 10:00 AM</Text>
-</View>
+      </View>
 
-
-{/* h */}
-
-<Text style={styles.sectionTitle}>Mis mascotas</Text>
-<ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carousel}>
-  <View style={styles.petCard}>
-    <Image source={require("../assets/iconDog.png")} style={styles.petImage} />
-    <Text style={styles.petName}>Max</Text>
-  </View>
-  <View style={styles.petCard}>
-    <Image source={require("../assets/iconApp.jpeg")} style={styles.petImage} />
-    <Text style={styles.petName}>Luna</Text>
-  </View>
-  {/* Agrega más mascotas aquí */}
-</ScrollView>
-
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Mis Mascotas</Text>
+        {pets.length === 0 ? (
+          <Text style={styles.emptyPetsText}>No tienes mascotas registradas</Text>
+        ) : (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carousel}>
+            {pets.map((pet) => (
+              <TouchableOpacity
+                key={pet.id}
+                style={styles.petCard}
+                onPress={() => navigation.navigate("PetDetails", { pet })}
+              >
+                <Image source={require("../assets/iconDog.png")} style={styles.petImage} />
+                <Text style={styles.petName}>{pet.name}</Text>
+                <Text style={styles.petInfo}>
+                  {pet.type === "Dog" ? "Perro" : "Gato"} • {pet.breed}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+      </View>
     </ScrollView>
   );
 };
@@ -67,8 +85,8 @@ const styles = StyleSheet.create({
     padding: 30,
   },
   header: {
-    flexDirection: 'row',       // Esto coloca los elementos en fila (horizontal)
-    alignItems: 'center',      // Centra verticalmente los elementos
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 20,
   },
   title: {
@@ -81,101 +99,89 @@ const styles = StyleSheet.create({
     height: 40,
     resizeMode: 'contain',
   },
+  date: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginTop: 20,
+  },
   card: {
-  backgroundColor: "#fff",
-  borderRadius: 10,
-  padding: 15,
-  marginTop: 20,
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.1,
-  shadowRadius: 5,
-  elevation: 3,
-},
-
-cardHeader: {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-},
-
-cardTitle: {
-  fontWeight: "bold",
-  fontSize: 16,
-  color: "#000",
-},
-
-// icons: {
-//   flexDirection: "row",
-//   gap: 10,
-// },
-
-// editIcon: {
-//   fontSize: 16,
-//   color: "#555",
-//   marginRight: 10,
-// },
-
-// deleteIcon: {
-//   fontSize: 16,
-//   color: "red",
-// },
-
-status: {
-  marginTop: 8,
-  fontSize: 14,
-  color: "#333",
-},
-
-time: {
-  fontSize: 14,
-  color: "#555",
-},
-
-
-
-
-
-sectionTitle: {
-  fontSize: 20,
-  fontWeight: "bold",
-  marginTop: 30,
-  marginBottom: 10,
-  color: "#333",
-},
-
-carousel: {
-  flexDirection: "row",
-},
-
-petCard: {
-  width: 120,
-  marginRight: 15,
-  backgroundColor: "#fff",
-  borderRadius: 10,
-  padding: 10,
-  alignItems: "center",
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.1,
-  shadowRadius: 4,
-  elevation: 3,
-},
-
-petImage: {
-  width: 80,
-  height: 80,
-  borderRadius: 40,
-  resizeMode: "cover",
-  marginBottom: 8,
-},
-
-petName: {
-  fontSize: 14,
-  fontWeight: "600",
-  color: "#444",
-},
-
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 15,
+    marginTop: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  cardTitle: {
+    fontWeight: "bold",
+    fontSize: 16,
+    color: "#000",
+  },
+  status: {
+    marginTop: 8,
+    fontSize: 14,
+    color: "#333",
+  },
+  time: {
+    fontSize: 14,
+    color: "#555",
+  },
+  section: {
+    marginTop: 20,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  emptyPetsText: {
+    marginTop: 10,
+    color: "#666",
+  },
+  carousel: {
+    marginTop: 10,
+  },
+  petCard: {
+    width: 120,
+    marginRight: 15,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 10,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  petImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    resizeMode: "cover",
+    marginBottom: 8,
+  },
+  petName: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#444",
+  },
+  petInfo: {
+    fontSize: 12,
+    color: "#666",
+  },
+  pIcon: {
+    fontSize: 20,
+  }
 });
 
 export default DashboardScreen;
