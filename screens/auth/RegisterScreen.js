@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { registerWithEmail } from "../../firebase/authService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const RegisterScreen = () => {
   const navigation = useNavigation();
@@ -58,7 +59,10 @@ const RegisterScreen = () => {
 
     try {
       setLoading(true);
-      await registerWithEmail(email, password);
+      const userCredential = await registerWithEmail(email, password);
+      const uid = userCredential.user.uid;
+      await AsyncStorage.setItem("userUid", uid);
+      console.log("Usuario registrado:", uid);
       navigation.replace("Dashboard");
     } catch (error) {
       if (error.code === "auth/email-already-in-use") {
