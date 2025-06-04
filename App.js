@@ -9,6 +9,7 @@ import ScheduleScreen from "./screens/ScheduleScreen";
 import AddPetScreen from "./screens/AddPetScreen";
 import Toast from "react-native-toast-message";
 import PetDetailsScreen from "./screens/PetDetailsScreen";
+import WalkScreen from './screens/WalkScreen';
 
 const Stack = createStackNavigator();
 
@@ -49,6 +50,11 @@ export default function App() {
         <Stack.Screen
           name="PetDetails"
           component={PetDetailsScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="WalkScreen"
+          component={WalkScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
