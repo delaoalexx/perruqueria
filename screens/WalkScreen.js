@@ -1,19 +1,36 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, FlatList } from "react-native";
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
-
-// Datos de ejemplo para las cards
-const toys = [
-  { id: '1', name: 'Pelota interactiva' },
-  { id: '2', name: 'Hueso de goma' },
-  { id: '3', name: 'Cuerda para jugar' },
-  { id: '4', name: 'Peluche sonoro' },
-];
+import { getProducts } from '../services/productsService'; // Asegúrate de que la ruta sea correcta
 
 const WalkScreen = ({ navigation }) => {
-  // Calcular el número de columnas basado en la orientación/pantalla
+  const [toys, setToys] = useState([]);
+  const [loading, setLoading] = useState(true);
   const numColumns = 2;
-  
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const products = await getProducts();
+        setToys(products);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text>Cargando productos...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {/* Botón de retroceso */}
@@ -26,18 +43,23 @@ const WalkScreen = ({ navigation }) => {
 
       <Text style={styles.title}>Juguetes</Text>
       
-      {/* Usar FlatList para mejor rendimiento y manejo responsive */}
-      <FlatList
-        data={toys}
-        keyExtractor={(item) => item.id}
-        numColumns={numColumns}
-        contentContainerStyle={styles.listContainer}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Text style={styles.cardText}>{item.name}</Text>
-          </View>
-        )}
-      />
+      {toys.length === 0 ? (
+        <Text style={styles.noProductsText}>No hay productos disponibles</Text>
+      ) : (
+        <FlatList
+          data={toys}
+          keyExtractor={(item) => item.id}
+          numColumns={numColumns}
+          contentContainerStyle={styles.listContainer}
+          renderItem={({ item }) => (
+            <View style={styles.card}>
+              <Text style={styles.cardText}>{item.name}</Text>
+              {/* <Text style={styles.cardText}>{item.imageUrl}</Text> */}
+              {/* Puedes añadir más campos aquí si lo necesitas */}
+            </View>
+          )}
+        />
+      )}
     </View>
   );
 };
@@ -63,7 +85,7 @@ const styles = StyleSheet.create({
     flex: 1,
     margin: 5,
     height: 150,
-    maxWidth: '48%', // Esto asegura que solo haya 2 cards por fila con espacio entre ellas
+    maxWidth: '48%',
     backgroundColor: '#fff',
     borderRadius: 10,
     alignItems: 'center',
@@ -77,7 +99,8 @@ const styles = StyleSheet.create({
   cardText: {
     fontSize: 16,
     color: '#555',
-    fontWeight: '500',
+    fontWeight: '200',
+    
   },
   backButton: {
     position: 'absolute',
@@ -85,6 +108,12 @@ const styles = StyleSheet.create({
     left: 20,
     zIndex: 1,
     padding: 10,
+  },
+  noProductsText: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 16,
+    color: '#666',
   },
 });
 
