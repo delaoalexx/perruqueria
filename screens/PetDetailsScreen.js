@@ -23,6 +23,13 @@ const PetDetailsScreen = ({ route, navigation }) => {
   const [unidadEdad, setUnidadEdad] = useState(
     pet.age?.unit === "años" ? "Año(s)" : "Meses"
   );
+  // Estados para peso
+  const [peso, setPeso] = useState(pet.weight?.number?.toString() || "");
+  const [unidadPeso, setUnidadPeso] = useState(
+    pet.weight?.unit === "kg" || pet.weight?.unit === "g"
+      ? pet.weight.unit
+      : "kg"
+  );
   const [loading, setLoading] = useState(false);
 
   // Cambiar foto
@@ -35,14 +42,12 @@ const PetDetailsScreen = ({ route, navigation }) => {
     });
     if (!result.canceled) {
       setPhoto(result.assets[0].uri);
-      // Aquí deberías subir la imagen y guardar la URL en Firestore si usas storage
     }
   };
 
   // Eliminar foto
   const handleDeletePhoto = () => {
     setPhoto("");
-    // Aquí podrías eliminar la foto del storage si la tienes guardada
   };
 
   // Guardar cambios
@@ -55,6 +60,10 @@ const PetDetailsScreen = ({ route, navigation }) => {
         age: {
           number: Number(edad),
           unit: unidadEdad.toLowerCase() === "año(s)" ? "años" : "meses",
+        },
+        weight: {
+          number: Number(peso),
+          unit: unidadPeso,
         },
       });
       Alert.alert("Éxito", "Datos actualizados");
@@ -243,6 +252,39 @@ const PetDetailsScreen = ({ route, navigation }) => {
             ))}
           </View>
 
+          {/* Peso - Editable */}
+          <Text style={styles.sectionLabel}>Peso</Text>
+          <View style={styles.ageContainer}>
+            <TextInput
+              style={styles.ageInput}
+              keyboardType="numeric"
+              placeholder="0"
+              value={peso}
+              onChangeText={setPeso}
+            />
+            <View style={styles.ageUnitContainer}>
+              {["kg", "g"].map((opcion) => (
+                <TouchableOpacity
+                  key={opcion}
+                  style={[
+                    styles.ageUnitButton,
+                    unidadPeso === opcion && styles.selectedAgeUnit,
+                  ]}
+                  onPress={() => setUnidadPeso(opcion)}
+                >
+                  <Text
+                    style={[
+                      styles.ageUnitText,
+                      unidadPeso === opcion && styles.selectedAgeUnitText,
+                    ]}
+                  >
+                    {opcion}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
           {/* Edad - Editable */}
           <Text style={styles.sectionLabel}>Edad</Text>
           <View style={styles.ageContainer}>
@@ -316,7 +358,7 @@ const styles = StyleSheet.create({
     color: "#333",
     flex: 1,
     textAlign: "center",
-    marginRight: 34, // Para compensar el botón de guardar
+    marginRight: 34,
   },
   saveButton: {
     padding: 5,

@@ -14,6 +14,7 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import RNPickerSelect from "react-native-picker-select";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getPetsByOwner } from "../services/petsService";
+import { Calendar } from "react-native-calendars";
 
 const ScheduleScreen = () => {
   const navigation = useNavigation();
@@ -23,6 +24,12 @@ const ScheduleScreen = () => {
   const [pets, setPets] = useState([]);
   const [selectedPet, setSelectedPet] = useState(null);
   const [loadingPets, setLoadingPets] = useState(true);
+
+  // Obtener la fecha de hoy en formato YYYY-MM-DD
+  const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
+    .toISOString()
+    .split("T")[0];
+  const [selectedDate, setSelectedDate] = useState(today);
 
   useEffect(() => {
     const fetchPets = async () => {
@@ -43,16 +50,16 @@ const ScheduleScreen = () => {
   }, []);
 
   const handleConfirm = () => {
-    console.log(`Cita confirmada para el servicio ${service?.title}`);
+    console.log(
+      `Cita confirmada para el servicio ${service?.title} el día ${selectedDate}`
+    );
     navigation.goBack();
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* StatusBar para manejar el espacio en iOS */}
       <StatusBar barStyle="dark-content" />
 
-      {/* Header fijo */}
       <View style={styles.headerContainer}>
         <View style={styles.header}>
           <TouchableOpacity
@@ -65,12 +72,10 @@ const ScheduleScreen = () => {
         </View>
       </View>
 
-      {/* Contenido desplazable */}
       <ScrollView
         style={styles.scrollContainer}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Detalles del servicio seleccionado */}
         {service && (
           <View style={styles.serviceDetails}>
             <Text style={styles.serviceTitle}>{service.title}</Text>
@@ -81,20 +86,37 @@ const ScheduleScreen = () => {
           </View>
         )}
 
-        {/* Contenedor para el Calendario */}
+        {/* Calendario visual */}
         <View style={styles.calendarContainer}>
-          <Text style={styles.placeholderText}>
-            Aquí se mostrará el calendario de Google Calendar
-          </Text>
+          <Text style={styles.timeSlotsTitle}>Selecciona una fecha</Text>
+          <Calendar
+            minDate={today}
+            onDayPress={(day) => setSelectedDate(day.dateString)}
+            markedDates={
+              selectedDate
+                ? {
+                    [selectedDate]: {
+                      selected: true,
+                      selectedColor: "#007aff",
+                    },
+                  }
+                : {}
+            }
+            theme={{
+              todayTextColor: "#007aff",
+              arrowColor: "#007aff",
+              selectedDayBackgroundColor: "#007aff",
+            }}
+          />
         </View>
 
-        {/* Contenedor para Horarios Disponibles */}
+        {/* Horarios Disponibles (puedes personalizar esto) */}
         <View style={styles.timeSlotsContainer}>
           <Text style={styles.timeSlotsTitle}>Horarios Disponibles</Text>
           <View style={styles.timeSlotsList}>
             <Text style={styles.placeholderText}>
-              Aquí se mostrarán los horarios disponibles obtenidos de Google
-              Calendar
+              Aquí se mostrarán los horarios disponibles para la fecha
+              seleccionada.
             </Text>
           </View>
         </View>
@@ -126,7 +148,6 @@ const ScheduleScreen = () => {
         </View>
       </ScrollView>
 
-      {/* Botones Inferiores */}
       <View style={styles.actionButtonsContainer}>
         <View style={styles.actionButtons}>
           <TouchableOpacity
@@ -138,6 +159,7 @@ const ScheduleScreen = () => {
           <TouchableOpacity
             style={styles.confirmButton}
             onPress={handleConfirm}
+            disabled={!selectedDate || !selectedPet}
           >
             <Text style={styles.confirmButtonText}>Confirmar</Text>
           </TouchableOpacity>
@@ -239,6 +261,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
     marginBottom: 15,
+    alignSelf: "flex-start",
   },
   timeSlotsList: {
     minHeight: 100,

@@ -8,9 +8,11 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  Image,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
-import { addPet } from "../services/petsService"; // Importa la función
+import { addPet } from "../services/petsService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const AddPetScreen = ({ navigation }) => {
@@ -18,7 +20,32 @@ const AddPetScreen = ({ navigation }) => {
   const [nombre, setNombre] = useState("");
   const [raza, setRaza] = useState("");
   const [edad, setEdad] = useState("");
+  const [peso, setPeso] = useState("");
+  const [unidadPeso, setUnidadPeso] = useState("");
   const [loading, setLoading] = useState(false);
+  const [image, setImage] = useState(null);
+
+  // Función para seleccionar imagen
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permiso requerido",
+        "Se necesita permiso para acceder a tus fotos."
+      );
+      return;
+    }
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setImage(result.assets[0].uri);
+    }
+  };
 
   const handleSave = async () => {
     // Validación básica
@@ -29,13 +56,15 @@ const AddPetScreen = ({ navigation }) => {
       !raza ||
       !selections.tamaño ||
       !edad ||
-      !selections.unidadEdad
+      !selections.unidadEdad ||
+      !peso ||
+      !unidadPeso
     ) {
       Alert.alert("Completa todos los campos");
       return;
     }
 
-    setLoading(true);
+    setLoading(true); // Mostrar carga antes de guardar
 
     // Obtener el UID del usuario autenticado
     const ownerId = await AsyncStorage.getItem("userUid");
@@ -45,13 +74,20 @@ const AddPetScreen = ({ navigation }) => {
       name: nombre,
       gender: selections.genero === "Macho" ? "Male" : "Female",
       breed: raza,
-      ownerId: ownerId || "", // Reemplaza esto por el UID real del usuario autenticado
-      picUrl: "",
+      ownerId: ownerId || "",
+      picUrl: image || "",
       size: selections.tamaño,
       age: {
         number: Number(edad),
         unit:
-          selections.unidadEdad.toLowerCase() === "año(s)" ? "años" : "meses",
+          selections.unidadEdad &&
+          selections.unidadEdad.toLowerCase() === "año(s)"
+            ? "años"
+            : "meses",
+      },
+      weight: {
+        number: Number(peso),
+        unit: unidadPeso,
       },
     };
 
@@ -62,7 +98,7 @@ const AddPetScreen = ({ navigation }) => {
       Alert.alert("Error", "No se pudo guardar la mascota");
       console.error(error);
     } finally {
-      setLoading(false); // <-- Finaliza la carga
+      setLoading(false);
     }
   };
 
@@ -83,12 +119,18 @@ const AddPetScreen = ({ navigation }) => {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {/* Subir Foto */}
           <View style={styles.photoContainer}>
-            <TouchableOpacity
-              style={styles.uploadPhoto}
-              onPress={() => console.log("Abrir galería")}
-            >
-              <Ionicons name="camera" size={40} color="#007aff" />
-              <Text style={styles.uploadText}>Subir Foto</Text>
+            <TouchableOpacity style={styles.uploadPhoto} onPress={pickImage}>
+              {image ? (
+                <Image
+                  source={{ uri: image }}
+                  style={{ width: 120, height: 120, borderRadius: 60 }}
+                />
+              ) : (
+                <>
+                  <Ionicons name="camera" size={40} color="#007aff" />
+                  <Text style={styles.uploadText}>Subir Foto</Text>
+                </>
+              )}
             </TouchableOpacity>
           </View>
 
@@ -184,6 +226,39 @@ const AddPetScreen = ({ navigation }) => {
             ))}
           </View>
 
+          {/* Peso */}
+          <Text style={styles.sectionLabel}>Peso</Text>
+          <View style={styles.ageContainer}>
+            <TextInput
+              style={styles.ageInput}
+              keyboardType="numeric"
+              placeholder="0"
+              value={peso}
+              onChangeText={setPeso}
+            />
+            <View style={styles.ageUnitContainer}>
+              {["kg", "g"].map((opcion) => (
+                <TouchableOpacity
+                  key={opcion}
+                  style={[
+                    styles.ageUnitButton,
+                    unidadPeso === opcion && styles.selectedAgeUnit,
+                  ]}
+                  onPress={() => setUnidadPeso(opcion)}
+                >
+                  <Text
+                    style={[
+                      styles.ageUnitText,
+                      unidadPeso === opcion && styles.selectedAgeUnitText,
+                    ]}
+                  >
+                    {opcion}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
           {/* Edad */}
           <Text style={styles.sectionLabel}>Edad</Text>
           <View style={styles.ageContainer}>
@@ -226,11 +301,20 @@ const AddPetScreen = ({ navigation }) => {
           <TouchableOpacity
             style={styles.cancelButton}
             onPress={() => navigation.goBack()}
+            disabled={loading}
           >
             <Text style={styles.cancelButtonText}>Cancelar</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.confirmButton} onPress={handleSave}>
-            <Text style={styles.confirmButtonText}>Guardar</Text>
+          <TouchableOpacity
+            style={styles.confirmButton}
+            onPress={handleSave}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.confirmButtonText}>Guardar</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -366,7 +450,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f0f0",
     borderRadius: 15,
     overflow: "hidden",
-    height: 45,
+    height: 48,
   },
   ageUnitButton: {
     flex: 1,
