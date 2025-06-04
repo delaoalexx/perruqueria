@@ -38,15 +38,25 @@ const createGoogleEvent = async (appointment, googleToken) => {
   return data.id;
 };
 
-// Crear cita en Firestore + Google Calendar
+// Crear cita en Firestore + Google Calendar (si aplica)
 export const createAppointment = async (appointment, googleToken) => {
-  const googleEventId = await createGoogleEvent(appointment, googleToken);
+  let googleEventId = null;
+
+  if (googleToken) {
+    try {
+      googleEventId = await createGoogleEvent(appointment, googleToken);
+    } catch (error) {
+      console.warn('No se pudo crear el evento en Google Calendar:', error.message);
+    }
+  }
+
   const docRef = await addDoc(collection(db, 'appointments'), {
     ...appointment,
     start: Timestamp.fromDate(appointment.start),
     end: Timestamp.fromDate(appointment.end),
     googleEventId,
   });
+
   return docRef.id;
 };
 
@@ -62,21 +72,25 @@ export const getAppointmentsForUser = async (userEmail) => {
   }));
 };
 
-// Eliminar cita de Firestore + Google Calendar
+// Eliminar cita de Firestore + Google Calendar (si aplica)
 export const deleteAppointment = async (appointmentId, googleEventId, googleToken) => {
   await deleteDoc(doc(db, 'appointments', appointmentId));
 
-  if (googleEventId) {
-    await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleEventId}`, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${googleToken}`,
-      },
-    });
+  if (googleToken && googleEventId) {
+    try {
+      await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleEventId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${googleToken}`,
+        },
+      });
+    } catch (error) {
+      console.warn('No se pudo eliminar el evento de Google Calendar:', error.message);
+    }
   }
 };
 
-// Editar cita en Firestore + Google Calendar
+// Editar cita en Firestore + Google Calendar (si aplica)
 export const updateAppointment = async (appointmentId, updatedData, googleToken, googleEventId) => {
   await updateDoc(doc(db, 'appointments', appointmentId), {
     ...updatedData,
@@ -84,25 +98,29 @@ export const updateAppointment = async (appointmentId, updatedData, googleToken,
     end: Timestamp.fromDate(updatedData.end),
   });
 
-  if (googleEventId) {
-    await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleEventId}`, {
-      method: 'PATCH',
-      headers: {
-        Authorization: `Bearer ${googleToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        summary: `Cita con ${updatedData.petName}`,
-        description: updatedData.description || '',
-        start: {
-          dateTime: updatedData.start.toISOString(),
-          timeZone: 'America/Mexico_City',
+  if (googleToken && googleEventId) {
+    try {
+      await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleEventId}`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${googleToken}`,
+          'Content-Type': 'application/json',
         },
-        end: {
-          dateTime: updatedData.end.toISOString(),
-          timeZone: 'America/Mexico_City',
-        },
-      }),
-    });
+        body: JSON.stringify({
+          summary: `Cita con ${updatedData.petName}`,
+          description: updatedData.description || '',
+          start: {
+            dateTime: updatedData.start.toISOString(),
+            timeZone: 'America/Mexico_City',
+          },
+          end: {
+            dateTime: updatedData.end.toISOString(),
+            timeZone: 'America/Mexico_City',
+          },
+        }),
+      });
+    } catch (error) {
+      console.warn('No se pudo actualizar el evento en Google Calendar:', error.message);
+    }
   }
 };
