@@ -3,8 +3,8 @@ import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from 'react
 
 const productos = [
   { id: '1', nombre: 'Paseo', icono: require('../assets/bone.png'), screen: 'WalkScreen' },
-  { id: '2', nombre: 'Limpieza', icono: require('../assets/soap.png'), screen: 'LimpiezaScreen' },
-  { id: '3', nombre: 'Alimentación', icono: require('../assets/food.png'), screen: 'AlimentacionScreen' },
+  { id: '2', nombre: 'Limpieza', icono: require('../assets/soap.png'), screen: 'CleanScreen' },
+  { id: '3', nombre: 'Alimentación', icono: require('../assets/food.png'), screen: 'FoodScreen' },
   { id: '4', nombre: 'Ropa', icono: require('../assets/g.png'), screen: 'RopaScreen' },
   { id: '5', nombre: 'Juguetes', icono: require('../assets/toy.png'), screen: 'JuguetesScreen' },
 ];

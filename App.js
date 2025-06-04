@@ -10,6 +10,8 @@ import AddPetScreen from "./screens/AddPetScreen";
 import Toast from "react-native-toast-message";
 import PetDetailsScreen from "./screens/PetDetailsScreen";
 import WalkScreen from './screens/WalkScreen';
+import CleanScreen from './screens/CleanScreen';
+import FoodScreen from "./screens/FoodScreen";
 
 const Stack = createStackNavigator();
 
@@ -57,6 +59,17 @@ export default function App() {
           component={WalkScreen}
           options={{ headerShown: false }}
         />
+        <Stack.Screen
+          name="CleanScreen"
+          component={CleanScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="FoodScreen"
+          component={FoodScreen}
+          options={{ headerShown: false }}
+        />
+        
       </Stack.Navigator>
       <Toast />
     </NavigationContainer>
