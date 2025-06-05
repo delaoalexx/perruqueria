@@ -5,6 +5,10 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
+  Modal,
+  TextInput,
+  Image,
+  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -12,7 +16,7 @@ import { auth } from "../firebase/firebaseConfig";
 import { useLogout } from "../hooks/auth/useLogout";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getPetsByOwner } from "../services/petsService";
-import { Alert } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 
 const AccountScreen = () => {
   const navigation = useNavigation();
@@ -21,6 +25,12 @@ const AccountScreen = () => {
   const email = user?.email || "usuario@email.com";
 
   const [pets, setPets] = useState([]);
+
+  // Estados para información personal
+  const [modalVisible, setModalVisible] = useState(false);
+  const [userName, setUserName] = useState("Usuario");
+  const [inputName, setInputName] = useState("");
+  const [userPhoto, setUserPhoto] = useState(null);
 
   // Cargar mascotas del usuario autenticado
   const loadPets = useCallback(async () => {
@@ -36,6 +46,55 @@ const AccountScreen = () => {
     const unsubscribe = navigation.addListener("focus", loadPets);
     return unsubscribe;
   }, [navigation, loadPets]);
+
+  // Cargar nombre y foto guardados por correo
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!email) return;
+      const savedName = await AsyncStorage.getItem("userName_" + email);
+      const savedPhoto = await AsyncStorage.getItem("userPhoto_" + email);
+      if (savedName) setUserName(savedName);
+      if (savedPhoto) setUserPhoto(savedPhoto);
+    };
+    loadProfile();
+  }, [email]);
+
+  // Mostrar el nombre actual en el campo de texto al abrir el modal
+  useEffect(() => {
+    if (modalVisible) {
+      setInputName(userName);
+    }
+  }, [modalVisible, userName]);
+
+  // Seleccionar foto
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+    });
+    if (!result.canceled) {
+      setUserPhoto(result.assets[0].uri);
+      await AsyncStorage.setItem("userPhoto_" + email, result.assets[0].uri);
+    }
+  };
+
+  // Borrar foto
+  const removePhoto = async () => {
+    setUserPhoto(null);
+    await AsyncStorage.removeItem("userPhoto_" + email);
+  };
+
+  // Guardar nombre
+  const saveName = async () => {
+    if (inputName.trim()) {
+      setUserName(inputName.trim());
+      await AsyncStorage.setItem("userName_" + email, inputName.trim());
+      setInputName("");
+      setModalVisible(false);
+    }
+  };
 
   const handleLogout = async () => {
     Alert.alert("Cerrar Sesión", "¿Estás seguro de que deseas cerrar sesión?", [
@@ -72,9 +131,18 @@ const AccountScreen = () => {
         {/* Tarjeta de Usuario */}
         <View style={[styles.card, styles.userCard]}>
           <View style={styles.cardContent}>
-            <View style={styles.avatar} />
+            <View style={styles.avatar}>
+              {userPhoto ? (
+                <Image
+                  source={{ uri: userPhoto }}
+                  style={{ width: 50, height: 50, borderRadius: 25 }}
+                />
+              ) : (
+                <Ionicons name="person-outline" size={28} color="#fff" />
+              )}
+            </View>
             <View style={styles.textContainer}>
-              <Text style={styles.userName}>Usuario</Text>
+              <Text style={styles.userName}>{userName}</Text>
               <Text style={styles.userEmail}>{email}</Text>
             </View>
           </View>
@@ -127,7 +195,10 @@ const AccountScreen = () => {
         </View>
 
         <View style={styles.card}>
-          <TouchableOpacity style={[styles.optionItem, styles.borderBottom]}>
+          <TouchableOpacity
+            style={[styles.optionItem, styles.borderBottom]}
+            onPress={() => setModalVisible(true)}
+          >
             <View style={styles.optionContent}>
               <Ionicons
                 name="person-outline"
@@ -170,6 +241,108 @@ const AccountScreen = () => {
         {/* Espacio para el botón fijo */}
         <View style={styles.spacer} />
       </ScrollView>
+
+      {/* Modal Información Personal */}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0,0,0,0.3)",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: 20,
+              padding: 24,
+              width: "85%",
+              alignItems: "center",
+            }}
+          >
+            <Text
+              style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}
+            >
+              Información Personal
+            </Text>
+            <Text style={{ marginBottom: 10 }}>Correo: {email}</Text>
+            <TouchableOpacity onPress={pickImage} style={{ marginBottom: 10 }}>
+              {userPhoto ? (
+                <Image
+                  key={userPhoto}
+                  source={{ uri: userPhoto }}
+                  style={{ width: 80, height: 80, borderRadius: 40 }}
+                />
+              ) : (
+                <View
+                  style={{
+                    width: 80,
+                    height: 80,
+                    borderRadius: 40,
+                    backgroundColor: "#eee",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <Ionicons name="camera" size={36} color="#888" />
+                </View>
+              )}
+              <Text style={{ color: "#007aff", marginTop: 5 }}>
+                Cambiar Foto
+              </Text>
+            </TouchableOpacity>
+            {userPhoto && (
+              <TouchableOpacity
+                onPress={removePhoto}
+                style={{
+                  marginBottom: 15,
+                  backgroundColor: "#eee",
+                  borderRadius: 8,
+                  paddingVertical: 6,
+                  paddingHorizontal: 16,
+                }}
+              >
+                <Text style={{ color: "#e74c3c" }}>Borrar Foto</Text>
+              </TouchableOpacity>
+            )}
+            <TextInput
+              placeholder="Nombre"
+              value={inputName}
+              onChangeText={setInputName}
+              style={{
+                borderWidth: 1,
+                borderColor: "#ccc",
+                borderRadius: 10,
+                padding: 10,
+                width: "100%",
+                marginBottom: 15,
+              }}
+            />
+            <TouchableOpacity
+              style={{
+                backgroundColor: "#007aff",
+                borderRadius: 10,
+                padding: 12,
+                width: "100%",
+                alignItems: "center",
+                marginBottom: 10,
+              }}
+              onPress={saveName}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>Guardar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setModalVisible(false)}>
+              <Text style={{ color: "#e74c3c" }}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Botón de Cerrar Sesión (fijo en la parte inferior) */}
       <View style={styles.footer}>
@@ -236,6 +409,8 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     backgroundColor: "rgba(255, 255, 255, 0.3)",
     marginRight: 15,
+    justifyContent: "center",
+    alignItems: "center",
   },
   petAvatar: {
     width: 48,
