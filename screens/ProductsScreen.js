@@ -1,27 +1,19 @@
-// import React from 'react';
-// import { View, Text } from 'react-native';
-
-// const ProductsScreen = () => {
-//   return (
-//     <View>
-//       <Text>Productos</Text>
-//     </View>
-//   );
-// };
-
-// export default ProductsScreen; 
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
 
 const productos = [
-  { id: '1', nombre: 'Paseo', icono: require('../assets/bone.png') },
-  { id: '2', nombre: 'Limpieza', icono: require('../assets/soap.png') },
-  { id: '3', nombre: 'Alimentación', icono: require('../assets/food.png') },
-  { id: '4', nombre: 'Ropa', icono: require('../assets/g.png') },
-  { id: '5', nombre: 'Juguetes', icono: require('../assets/toy.png') },
+  { id: '1', nombre: 'Paseo', icono: require('../assets/bone.png'), screen: 'WalkScreen' },
+  { id: '2', nombre: 'Limpieza', icono: require('../assets/soap.png'), screen: 'CleanScreen' },
+  { id: '3', nombre: 'Alimentación', icono: require('../assets/food.png'), screen: 'FoodScreen' },
+  { id: '4', nombre: 'Ropa', icono: require('../assets/g.png'), screen: 'RopaScreen' },
+  { id: '5', nombre: 'Juguetes', icono: require('../assets/toy.png'), screen: 'JuguetesScreen' },
 ];
 
-const ProductsScreen = () => {
+const ProductsScreen = ({ navigation }) => {
+  const handlePress = (screenName) => {
+    navigation.navigate(screenName);
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Productos</Text>
@@ -30,10 +22,13 @@ const ProductsScreen = () => {
         keyExtractor={(item) => item.id}
         numColumns={2}
         renderItem={({ item }) => (
-          <View style={styles.item}>
+          <TouchableOpacity 
+            style={styles.item}
+            onPress={() => handlePress(item.screen)}
+          >
             <Image source={item.icono} style={styles.icono} />
             <Text style={styles.nombre}>{item.nombre}</Text>
-          </View>
+          </TouchableOpacity>
         )}
         contentContainerStyle={styles.list}
       />
@@ -41,6 +36,7 @@ const ProductsScreen = () => {
   );
 };
 
+// Los estilos se mantienen igual...
 const styles = StyleSheet.create({
   container: {
     padding: 20,
