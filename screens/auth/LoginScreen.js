@@ -59,6 +59,7 @@ const LoginScreen = () => {
       await loginWithEmail(email, password).then(async (userCredential) => {
         const uid = userCredential.user.uid;
         await AsyncStorage.setItem("userUid", uid);
+        await AsyncStorage.setItem("userEmail", email);
         console.log("Usuario autenticado:", uid);
       });
       navigation.replace("Dashboard");

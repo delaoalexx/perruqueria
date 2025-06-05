@@ -62,6 +62,7 @@ const RegisterScreen = () => {
       const userCredential = await registerWithEmail(email, password);
       const uid = userCredential.user.uid;
       await AsyncStorage.setItem("userUid", uid);
+      await AsyncStorage.setItem("userEmail", email);
       console.log("Usuario registrado:", uid);
       navigation.replace("Dashboard");
     } catch (error) {
@@ -71,6 +72,8 @@ const RegisterScreen = () => {
         setEmailError("Correo inválido");
       } else if (error.code === "auth/weak-password") {
         setPasswordError("La contraseña es muy débil");
+      } else {
+        setEmailError("Ocurrió un error. Intenta de nuevo.");
       }
     } finally {
       setLoading(false);

@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
   StatusBar,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -15,45 +16,203 @@ import RNPickerSelect from "react-native-picker-select";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getPetsByOwner } from "../services/petsService";
 import { Calendar } from "react-native-calendars";
+import * as ExpoCalendar from "expo-calendar";
+import {
+  createAppointment,
+  updateAppointment,
+} from "../services/appointmentService";
+import { useGoogleAuth } from "../hooks/auth/useGoogleAuth";
+
+const schedules = [
+  { label: "10:00", value: "10:00" },
+  { label: "11:00", value: "11:00" },
+  { label: "12:00", value: "12:00" },
+  { label: "13:00", value: "13:00" },
+  { label: "16:00", value: "16:00" },
+  { label: "17:00", value: "17:00" },
+];
+
+// Helper para crear fecha local (no UTC)
+function getLocalDateTime(dateString, hour, minute) {
+  const [year, month, day] = dateString.split("-").map(Number);
+  return new Date(year, month - 1, day, hour, minute, 0, 0);
+}
 
 const ScheduleScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const { service } = route.params || {};
+  const { service, appointmentToEdit } = route.params || {};
 
   const [pets, setPets] = useState([]);
   const [selectedPet, setSelectedPet] = useState(null);
   const [loadingPets, setLoadingPets] = useState(true);
 
-  // Obtener la fecha de hoy en formato YYYY-MM-DD
+  // Fecha local hoy
   const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
     .toISOString()
     .split("T")[0];
   const [selectedDate, setSelectedDate] = useState(today);
 
+  // Horario seleccionado
+  const [selectedHour, setSelectedHour] = useState(null);
+
+  // Google Auth
+  const { userInfo } = useGoogleAuth();
+  const [userEmail, setUserEmail] = useState(null);
+
+  // Estado de carga al confirmar cita
+  const [loadingConfirm, setLoadingConfirm] = useState(false);
+
+  // Inicializar campos si es edición
+  useEffect(() => {
+    if (appointmentToEdit) {
+      // Convierte a Date si es string
+      const dateObj =
+        typeof appointmentToEdit.start === "string"
+          ? new Date(appointmentToEdit.start)
+          : appointmentToEdit.start;
+      const yyyy = dateObj.getFullYear();
+      const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
+      const dd = String(dateObj.getDate()).padStart(2, "0");
+      setSelectedDate(`${yyyy}-${mm}-${dd}`);
+
+      const hour = dateObj.getHours().toString().padStart(2, "0");
+      const minute = dateObj.getMinutes().toString().padStart(2, "0");
+      setSelectedHour(`${hour}:${minute}`);
+
+      if (appointmentToEdit.petId) {
+        setSelectedPet(appointmentToEdit.petId);
+      }
+    }
+  }, [appointmentToEdit]);
+
+  // Obtener email del usuario
+  useEffect(() => {
+    const fetchEmail = async () => {
+      if (userInfo?.email) {
+        setUserEmail(userInfo.email);
+      } else {
+        const email = await AsyncStorage.getItem("userEmail");
+        setUserEmail(email);
+      }
+    };
+    fetchEmail();
+  }, [userInfo]);
+
+  // Obtener mascotas
   useEffect(() => {
     const fetchPets = async () => {
       setLoadingPets(true);
       const uid = await AsyncStorage.getItem("userUid");
       if (uid) {
         const petsData = await getPetsByOwner(uid);
-        setPets(
-          petsData.map((pet) => ({
-            label: pet.name,
-            value: pet.id,
-          }))
-        );
+        const petsList = petsData.map((pet) => ({
+          label: pet.name,
+          value: pet.id,
+        }));
+        setPets(petsList);
+
+        // Si es edición y el petId existe en la lista, selecciona la mascota
+        if (
+          appointmentToEdit &&
+          appointmentToEdit.petId &&
+          petsList.some((p) => p.value === appointmentToEdit.petId)
+        ) {
+          setSelectedPet(appointmentToEdit.petId);
+        }
       }
       setLoadingPets(false);
     };
     fetchPets();
   }, []);
 
-  const handleConfirm = () => {
-    console.log(
-      `Cita confirmada para el servicio ${service?.title} el día ${selectedDate}`
+  // Agendar en calendario del dispositivo
+  const createDeviceCalendarEvent = async (appointment) => {
+    const { status } = await ExpoCalendar.requestCalendarPermissionsAsync();
+    if (status !== "granted") {
+      throw new Error("Permiso de calendario no concedido");
+    }
+    const calendars = await ExpoCalendar.getCalendarsAsync(
+      ExpoCalendar.EntityTypes.EVENT
     );
-    navigation.goBack();
+    const defaultCalendar =
+      calendars.find((cal) => cal.allowsModifications) || calendars[0];
+
+    const eventId = await ExpoCalendar.createEventAsync(defaultCalendar.id, {
+      title: `Cita con ${appointment.petName}`,
+      startDate: appointment.start,
+      endDate: appointment.end,
+      timeZone: "America/Mexico_City",
+      notes: appointment.description || "",
+    });
+    return eventId;
+  };
+
+  // Confirmar cita (crear o editar)
+  const handleConfirm = async () => {
+    // Validación de campos
+    if (!selectedDate || !selectedHour || !selectedPet) {
+      Alert.alert(
+        "Faltan datos",
+        "Selecciona fecha, hora y mascota para continuar."
+      );
+      return;
+    }
+    if (pets.length === 0) {
+      Alert.alert(
+        "Sin mascotas",
+        "Debes agregar una mascota antes de agendar una cita."
+      );
+      return;
+    }
+
+    try {
+      setLoadingConfirm(true);
+      const petObj = pets.find((p) => p.value === selectedPet);
+      const [hour, minute] = selectedHour.split(":");
+      const start = getLocalDateTime(
+        selectedDate,
+        Number(hour),
+        Number(minute)
+      );
+      const end = new Date(start.getTime() + (service?.time || 60) * 60000);
+
+      const appointment = {
+        petName: petObj?.label || "",
+        petId: selectedPet,
+        description: `Servicio: ${service?.title}`,
+        start,
+        end,
+        userEmail: userEmail,
+      };
+
+      const googleToken = userInfo?.accessToken;
+
+      if (appointmentToEdit) {
+        // EDITAR cita
+        await updateAppointment(
+          appointmentToEdit.id,
+          appointment,
+          googleToken,
+          appointmentToEdit.googleEventId
+        );
+      } else {
+        // CREAR cita
+        await createAppointment(appointment, googleToken);
+      }
+
+      // Agenda en el calendario del dispositivo (solo para nuevas citas)
+      if (!appointmentToEdit) {
+        await createDeviceCalendarEvent(appointment);
+      }
+
+      // Redirige a la sección/tab "Mis Citas" del TabNavigator
+      navigation.navigate("Dashboard", { screen: "Mis Citas" });
+    } catch (error) {
+      Alert.alert("Error", error.message || "No se pudo agendar la cita");
+    } finally {
+      setLoadingConfirm(false);
+    }
   };
 
   return (
@@ -68,7 +227,9 @@ const ScheduleScreen = () => {
           >
             <Ionicons name="chevron-back" size={24} color="#000" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Agendar cita</Text>
+          <Text style={styles.headerTitle}>
+            {appointmentToEdit ? "Editar cita" : "Agendar cita"}
+          </Text>
         </View>
       </View>
 
@@ -110,14 +271,29 @@ const ScheduleScreen = () => {
           />
         </View>
 
-        {/* Horarios Disponibles (puedes personalizar esto) */}
+        {/* Horarios Disponibles */}
         <View style={styles.timeSlotsContainer}>
           <Text style={styles.timeSlotsTitle}>Horarios Disponibles</Text>
           <View style={styles.timeSlotsList}>
-            <Text style={styles.placeholderText}>
-              Aquí se mostrarán los horarios disponibles para la fecha
-              seleccionada.
-            </Text>
+            {schedules.map((h) => (
+              <TouchableOpacity
+                key={h.value}
+                style={[
+                  styles.hourButton,
+                  selectedHour === h.value && styles.selectedHourButton,
+                ]}
+                onPress={() => setSelectedHour(h.value)}
+              >
+                <Text
+                  style={[
+                    styles.hourButtonText,
+                    selectedHour === h.value && styles.selectedHourButtonText,
+                  ]}
+                >
+                  {h.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
 
@@ -126,6 +302,15 @@ const ScheduleScreen = () => {
           <Text style={styles.dropdownLabel}>Selecciona la mascota</Text>
           {loadingPets ? (
             <ActivityIndicator color="#007aff" />
+          ) : pets.length === 0 ? (
+            <View style={styles.dropdownCard}>
+              <Text
+                style={{ color: "#e74c3c", fontSize: 16, textAlign: "center" }}
+              >
+                No tienes mascotas registradas. Agrega una para poder agendar
+                una cita.
+              </Text>
+            </View>
           ) : (
             <View style={styles.dropdownCard}>
               <RNPickerSelect
@@ -142,6 +327,7 @@ const ScheduleScreen = () => {
                   placeholder: styles.dropdownPlaceholder,
                 }}
                 value={selectedPet}
+                disabled={!!appointmentToEdit}
               />
             </View>
           )}
@@ -159,9 +345,17 @@ const ScheduleScreen = () => {
           <TouchableOpacity
             style={styles.confirmButton}
             onPress={handleConfirm}
-            disabled={!selectedDate || !selectedPet}
+            disabled={
+              loadingConfirm || pets.length === 0 // Deshabilita si no hay mascotas
+            }
           >
-            <Text style={styles.confirmButtonText}>Confirmar</Text>
+            {loadingConfirm ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.confirmButtonText}>
+                {appointmentToEdit ? "Guardar cambios" : "Confirmar"}
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -264,9 +458,30 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   timeSlotsList: {
-    minHeight: 100,
+    flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "center",
     alignItems: "center",
+    minHeight: 60,
+    gap: 10,
+  },
+  hourButton: {
+    backgroundColor: "#f0f0f0",
+    borderRadius: 15,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    margin: 5,
+  },
+  selectedHourButton: {
+    backgroundColor: "#007aff",
+  },
+  hourButtonText: {
+    color: "#333",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  selectedHourButtonText: {
+    color: "#fff",
   },
   placeholderText: {
     fontSize: 14,
