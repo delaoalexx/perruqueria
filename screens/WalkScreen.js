@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getProducts } from '../services/productsService'; // Asegúrate de que la ruta sea correcta
+import { getProducts } from '../services/productsService';
 
 const WalkScreen = ({ navigation }) => {
   const [toys, setToys] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const numColumns = 2;
 
   useEffect(() => {
@@ -13,8 +14,9 @@ const WalkScreen = ({ navigation }) => {
       try {
         const products = await getProducts();
         setToys(products);
-      } catch (error) {
-        console.error("Error fetching products:", error);
+      } catch (err) {
+        setError('Error al cargar los productos');
+        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -23,41 +25,78 @@ const WalkScreen = ({ navigation }) => {
     fetchProducts();
   }, []);
 
+  const renderProductCard = ({ item }) => (
+    <View style={styles.card}>
+      {/* Contenedor de imagen con placeholder */}
+      <View style={styles.imageContainer}>
+        {item.imageUrl ? (
+          <Image 
+            source={{ uri: item.imageUrl }} 
+            style={styles.productImage}
+            resizeMode="contain"
+          />
+        ) : (
+          <View style={styles.placeholder}>
+            <Ionicons name="paw" size={40} color="#ccc" />
+          </View>
+        )}
+      </View>
+
+      {/* Contenido textual */}
+      <View style={styles.textContainer}>
+        <Text style={styles.productName} numberOfLines={2}>
+          {item.name}
+        </Text>
+        <Text style={styles.productPrice}>
+          ${item.price ? item.price.toFixed(2) : '0.00'}
+        </Text>
+      </View>
+    </View>
+  );
+
   if (loading) {
     return (
-      <View style={styles.container}>
-        <Text>Cargando productos...</Text>
+      <View style={[styles.container, styles.center]}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <Text style={styles.errorText}>{error}</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      {/* Botón de retroceso */}
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
-      >
-        <Ionicons name="chevron-back" size={24} color="#000" />
-      </TouchableOpacity>
+      {/* Header con botón de retroceso */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="chevron-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.title}>Juguetes para Paseo</Text>
+      </View>
 
-      <Text style={styles.title}>Juguetes</Text>
-      
+      {/* Lista de productos */}
       {toys.length === 0 ? (
-        <Text style={styles.noProductsText}>No hay productos disponibles</Text>
+        <View style={[styles.container, styles.center]}>
+          <Text style={styles.emptyText}>No hay productos disponibles</Text>
+        </View>
       ) : (
         <FlatList
           data={toys}
+          renderItem={renderProductCard}
           keyExtractor={(item) => item.id}
           numColumns={numColumns}
-          contentContainerStyle={styles.listContainer}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <Text style={styles.cardText}>{item.name}</Text>
-              {/* <Text style={styles.cardText}>{item.imageUrl}</Text> */}
-              {/* Puedes añadir más campos aquí si lo necesitas */}
-            </View>
-          )}
+          contentContainerStyle={styles.listContent}
+          columnWrapperStyle={styles.columnWrapper}
+          showsVerticalScrollIndicator={false}
         />
       )}
     </View>
@@ -67,53 +106,90 @@ const WalkScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f8f9fa',
+    paddingHorizontal: 15,
+  },
+  center: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 50,
+    marginBottom: 20,
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 10,
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 20,
     color: '#333',
-    marginTop: 50,
-    textAlign: 'center',
   },
-  listContainer: {
+  listContent: {
+    paddingBottom: 20,
+  },
+  columnWrapper: {
     justifyContent: 'space-between',
+    marginBottom: 15,
   },
   card: {
-    flex: 1,
-    margin: 5,
-    height: 150,
-    maxWidth: '48%',
+    width: '48%',
     backgroundColor: '#fff',
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 12,
+    padding: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 5,
+    shadowRadius: 6,
     elevation: 3,
   },
-  cardText: {
-    fontSize: 16,
-    color: '#555',
-    fontWeight: '200',
-    
+  imageContainer: {
+    width: '100%',
+    height: 120,
+    marginBottom: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    overflow: 'hidden',
   },
-  backButton: {
-    position: 'absolute',
-    top: 40,
-    left: 20,
-    zIndex: 1,
-    padding: 10,
+  productImage: {
+    width: '100%',
+    height: '100%',
   },
-  noProductsText: {
-    textAlign: 'center',
-    marginTop: 20,
+  placeholder: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  textContainer: {
+    paddingHorizontal: 5,
+  },
+  productName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 6,
+    height: 40, // Altura fija para 2 líneas
+  },
+  productPrice: {
     fontSize: 16,
-    color: '#666',
+    fontWeight: '700',
+    color: '#2ecc71',
+    textAlign: 'right',
+  },
+  errorText: {
+    color: '#e74c3c',
+    fontSize: 16,
+  },
+  emptyText: {
+    color: '#7f8c8d',
+    fontSize: 16,
   },
 });
 
