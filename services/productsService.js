@@ -25,7 +25,6 @@ export const updateProduct = async (id, data) => {
 };
 
 
-
 export const deleteProduct = async (id) => {
   const productDoc = doc(db, 'products', id);
   await deleteDoc(productDoc);
