@@ -5,16 +5,34 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image
+  Image,
+  ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getPetsByOwner } from "../services/petsService";
+import { getAppointmentsForUser } from "../services/appointmentService";
+
+function formatDateTime(date) {
+  const fecha = date.toLocaleDateString("es-MX", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  let hora = date.toLocaleTimeString("es-MX", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  return `${fecha}, ${hora}`;
+}
 
 const DashboardScreen = () => {
   const navigation = useNavigation();
   const [pets, setPets] = useState([]);
+  const [nextAppointment, setNextAppointment] = useState(null);
+  const [loadingAppointment, setLoadingAppointment] = useState(true);
 
   const loadPets = useCallback(async () => {
     const ownerId = await AsyncStorage.getItem("userUid");
@@ -24,41 +42,89 @@ const DashboardScreen = () => {
     }
   }, []);
 
+  // Cargar próxima cita
+  const loadNextAppointment = useCallback(async () => {
+    setLoadingAppointment(true);
+    const email = await AsyncStorage.getItem("userEmail");
+    if (email) {
+      const appointments = await getAppointmentsForUser(email);
+      const now = new Date();
+      // Asegura que startDate siempre sea un Date válido
+      const futureAppointments = appointments
+        .map((a) => ({
+          ...a,
+          startDate: a.start instanceof Date ? a.start : new Date(a.start),
+        }))
+        .filter((a) => a.startDate > now)
+        .sort((a, b) => a.startDate - b.startDate);
+      setNextAppointment(futureAppointments[0] || null);
+    } else {
+      setNextAppointment(null);
+    }
+    setLoadingAppointment(false);
+  }, []);
+
   useEffect(() => {
     loadPets();
-  }, [loadPets]);
+    loadNextAppointment();
+    const unsubscribe = navigation.addListener("focus", () => {
+      loadPets();
+      loadNextAppointment();
+    });
+    return unsubscribe;
+  }, [navigation, loadPets, loadNextAppointment]);
 
   return (
     <ScrollView style={styles.container}>
       {/* Encabezado */}
       <View style={styles.header}>
-        <Image
-          source={require("../assets/iconDog.png")}
-          style={styles.logo}
-        />
+        <Image source={require("../assets/iconDog.png")} style={styles.logo} />
         <Text style={styles.title}>Perruqueria</Text>
       </View>
 
-      <Text style={styles.date}>Próxima cita</Text>
+      {/* Contenedor Próxima Cita */}
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Próxima cita</Text>
+      </View>
       <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle}>Corte de cabello</Text>
-          <View style={styles.icons}>
-            <TouchableOpacity>
-              <Text style={styles.pIcon}>🐾</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-        <Text style={styles.status}>Confirmada</Text>
-        <Text style={styles.time}>Mañana, 10:00 AM</Text>
+        {loadingAppointment ? (
+          <ActivityIndicator color="#007aff" size="small" />
+        ) : nextAppointment ? (
+          <>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>
+                {nextAppointment.description
+                  ? nextAppointment.description.replace("Servicio: ", "")
+                  : "Cita"}
+              </Text>
+            </View>
+            <Text style={styles.status}>Confirmada</Text>
+            <Text style={styles.time}>
+              {formatDateTime(
+                nextAppointment.start instanceof Date
+                  ? nextAppointment.start
+                  : new Date(nextAppointment.start)
+              )}
+            </Text>
+          </>
+        ) : (
+          <Text style={styles.emptyPetsText}>No tienes próximas citas</Text>
+        )}
       </View>
 
+      {/* Contenedor Mis Mascotas */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Mis Mascotas</Text>
         {pets.length === 0 ? (
-          <Text style={styles.emptyPetsText}>No tienes mascotas registradas</Text>
+          <Text style={styles.emptyPetsText}>
+            No tienes mascotas registradas
+          </Text>
         ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carousel}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.carousel}
+          >
             {pets.map((pet) => (
               <TouchableOpacity
                 key={pet.id}
@@ -89,12 +155,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
-    padding: 30,
+    padding: 20,
+    marginTop: 20,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+    paddingTop: 10,
   },
   title: {
     fontSize: 25,
@@ -104,19 +172,21 @@ const styles = StyleSheet.create({
   logo: {
     width: 40,
     height: 40,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
-  date: {
-    fontSize: 18,
+  sectionHeader: {
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    fontSize: 20,
     fontWeight: "bold",
     color: "#333",
-    marginTop: 20,
   },
   card: {
     backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 15,
-    marginTop: 10,
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -134,21 +204,13 @@ const styles = StyleSheet.create({
     color: "#000",
   },
   status: {
-    marginTop: 8,
+    marginTop: 5,
     fontSize: 14,
-    color: "#333",
+    color: "#007aff",
   },
   time: {
     fontSize: 14,
     color: "#555",
-  },
-  section: {
-    marginTop: 20,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333",
   },
   emptyPetsText: {
     marginTop: 10,
@@ -197,7 +259,7 @@ const styles = StyleSheet.create({
   },
   pIcon: {
     fontSize: 20,
-  }
+  },
 });
 
 export default DashboardScreen;

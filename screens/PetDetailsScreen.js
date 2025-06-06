@@ -9,13 +9,17 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { updatePet, deletePet } from "../services/petsService";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const PetDetailsScreen = ({ route, navigation }) => {
   const { pet } = route.params;
+  const insets = useSafeAreaInsets();
 
   const [photo, setPhoto] = useState(pet.picUrl || "");
   const [tamaño, setTamaño] = useState(pet.size || pet.tamaño || "");
@@ -96,237 +100,246 @@ const PetDetailsScreen = ({ route, navigation }) => {
 
   return (
     <View style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="chevron-back" size={24} color="#000" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Detalles Mascota</Text>
-          <TouchableOpacity
-            style={styles.saveButton}
-            onPress={handleSave}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator size="small" color="#007aff" />
-            ) : (
-              <Ionicons name="checkmark" size={24} color="#007aff" />
-            )}
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Foto de la mascota */}
-          <View style={styles.photoContainer}>
-            <TouchableOpacity onPress={handleChangePhoto}>
-              {photo ? (
-                <Image source={{ uri: photo }} style={styles.petPhoto} />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+      >
+        <View style={styles.container}>
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Ionicons name="chevron-back" size={24} color="#000" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Detalles Mascota</Text>
+            <TouchableOpacity
+              style={styles.saveButton}
+              onPress={handleSave}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#007aff" />
               ) : (
-                <View style={styles.uploadPhoto}>
-                  <Ionicons name="camera" size={40} color="#007aff" />
-                  <Text style={styles.uploadText}>Subir Foto</Text>
-                </View>
+                <Ionicons name="checkmark" size={24} color="#007aff" />
               )}
             </TouchableOpacity>
-            <View style={styles.photoActions}>
-              <TouchableOpacity
-                onPress={handleChangePhoto}
-                style={styles.iconBtn}
-              >
-                <Ionicons name="create-outline" size={22} color="#007aff" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleDeletePhoto}
-                style={styles.iconBtn}
-              >
-                <Ionicons name="trash-outline" size={22} color="#e74c3c" />
-              </TouchableOpacity>
-            </View>
           </View>
 
-          {/* Tipo - Solo lectura */}
-          <Text style={styles.sectionLabel}>Tipo</Text>
-          <View style={styles.inlineOptions}>
-            {["Perro", "Gato"].map((opcion) => (
-              <View
-                key={opcion}
-                style={[
-                  styles.optionButton,
-                  styles.disabledOption,
-                  (pet.type === "Dog" && opcion === "Perro") ||
-                  (pet.type === "Cat" && opcion === "Gato")
-                    ? styles.selectedOption
-                    : null,
-                ]}
-              >
-                <Text
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            {/* Foto de la mascota */}
+            <View style={styles.photoContainer}>
+              <TouchableOpacity onPress={handleChangePhoto}>
+                {photo ? (
+                  <Image source={{ uri: photo }} style={styles.petPhoto} />
+                ) : (
+                  <View style={styles.uploadPhoto}>
+                    <Ionicons name="camera" size={40} color="#007aff" />
+                    <Text style={styles.uploadText}>Subir Foto</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+              <View style={styles.photoActions}>
+                <TouchableOpacity
+                  onPress={handleChangePhoto}
+                  style={styles.iconBtn}
+                >
+                  <Ionicons name="create-outline" size={22} color="#007aff" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleDeletePhoto}
+                  style={styles.iconBtn}
+                >
+                  <Ionicons name="trash-outline" size={22} color="#e74c3c" />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Tipo - Solo lectura */}
+            <Text style={styles.sectionLabel}>Tipo</Text>
+            <View style={styles.inlineOptions}>
+              {["Perro", "Gato"].map((opcion) => (
+                <View
+                  key={opcion}
                   style={[
-                    styles.optionText,
-                    styles.disabledText,
+                    styles.optionButton,
+                    styles.disabledOption,
                     (pet.type === "Dog" && opcion === "Perro") ||
                     (pet.type === "Cat" && opcion === "Gato")
-                      ? styles.selectedText
+                      ? styles.selectedOption
                       : null,
                   ]}
                 >
-                  {opcion}
-                </Text>
-              </View>
-            ))}
-          </View>
+                  <Text
+                    style={[
+                      styles.optionText,
+                      styles.disabledText,
+                      (pet.type === "Dog" && opcion === "Perro") ||
+                      (pet.type === "Cat" && opcion === "Gato")
+                        ? styles.selectedText
+                        : null,
+                    ]}
+                  >
+                    {opcion}
+                  </Text>
+                </View>
+              ))}
+            </View>
 
-          {/* Nombre - Solo lectura */}
-          <Text style={styles.sectionLabel}>Nombre</Text>
-          <TextInput
-            style={[styles.textInput, styles.disabledInput]}
-            value={pet.name}
-            editable={false}
-            placeholder="Nombre"
-          />
+            {/* Nombre - Solo lectura */}
+            <Text style={styles.sectionLabel}>Nombre</Text>
+            <TextInput
+              style={[styles.textInput, styles.disabledInput]}
+              value={pet.name}
+              editable={false}
+              placeholder="Nombre"
+            />
 
-          {/* Género - Solo lectura */}
-          <Text style={styles.sectionLabel}>Género</Text>
-          <View style={styles.inlineOptions}>
-            {["Macho", "Hembra"].map((opcion) => (
-              <View
-                key={opcion}
-                style={[
-                  styles.optionButton,
-                  styles.disabledOption,
-                  (pet.gender === "Male" && opcion === "Macho") ||
-                  (pet.gender === "Female" && opcion === "Hembra")
-                    ? styles.selectedOption
-                    : null,
-                ]}
-              >
-                <Text
+            {/* Género - Solo lectura */}
+            <Text style={styles.sectionLabel}>Género</Text>
+            <View style={styles.inlineOptions}>
+              {["Macho", "Hembra"].map((opcion) => (
+                <View
+                  key={opcion}
                   style={[
-                    styles.optionText,
-                    styles.disabledText,
+                    styles.optionButton,
+                    styles.disabledOption,
                     (pet.gender === "Male" && opcion === "Macho") ||
                     (pet.gender === "Female" && opcion === "Hembra")
-                      ? styles.selectedText
+                      ? styles.selectedOption
                       : null,
                   ]}
                 >
-                  {opcion}
-                </Text>
+                  <Text
+                    style={[
+                      styles.optionText,
+                      styles.disabledText,
+                      (pet.gender === "Male" && opcion === "Macho") ||
+                      (pet.gender === "Female" && opcion === "Hembra")
+                        ? styles.selectedText
+                        : null,
+                    ]}
+                  >
+                    {opcion}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            {/* Raza - Solo lectura */}
+            <Text style={styles.sectionLabel}>Raza</Text>
+            <TextInput
+              style={[styles.textInput, styles.disabledInput]}
+              value={pet.breed}
+              editable={false}
+              placeholder="Raza"
+            />
+
+            {/* Tamaño - Editable */}
+            <Text style={styles.sectionLabel}>Tamaño</Text>
+            <View style={styles.inlineOptions}>
+              {["Pequeño", "Mediano", "Grande"].map((opcion) => (
+                <TouchableOpacity
+                  key={opcion}
+                  style={[
+                    styles.optionButton,
+                    tamaño === opcion && styles.selectedOption,
+                  ]}
+                  onPress={() => setTamaño(opcion)}
+                >
+                  <Text
+                    style={[
+                      styles.optionText,
+                      tamaño === opcion && styles.selectedText,
+                    ]}
+                  >
+                    {opcion}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Peso - Editable */}
+            <Text style={styles.sectionLabel}>Peso</Text>
+            <View style={styles.ageContainer}>
+              <TextInput
+                style={styles.ageInput}
+                keyboardType="numeric"
+                placeholder="0"
+                value={peso}
+                onChangeText={setPeso}
+              />
+              <View style={styles.ageUnitContainer}>
+                {["kg", "g"].map((opcion) => (
+                  <TouchableOpacity
+                    key={opcion}
+                    style={[
+                      styles.ageUnitButton,
+                      unidadPeso === opcion && styles.selectedAgeUnit,
+                    ]}
+                    onPress={() => setUnidadPeso(opcion)}
+                  >
+                    <Text
+                      style={[
+                        styles.ageUnitText,
+                        unidadPeso === opcion && styles.selectedAgeUnitText,
+                      ]}
+                    >
+                      {opcion}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
-            ))}
-          </View>
-
-          {/* Raza - Solo lectura */}
-          <Text style={styles.sectionLabel}>Raza</Text>
-          <TextInput
-            style={[styles.textInput, styles.disabledInput]}
-            value={pet.breed}
-            editable={false}
-            placeholder="Raza"
-          />
-
-          {/* Tamaño - Editable */}
-          <Text style={styles.sectionLabel}>Tamaño</Text>
-          <View style={styles.inlineOptions}>
-            {["Pequeño", "Mediano", "Grande"].map((opcion) => (
-              <TouchableOpacity
-                key={opcion}
-                style={[
-                  styles.optionButton,
-                  tamaño === opcion && styles.selectedOption,
-                ]}
-                onPress={() => setTamaño(opcion)}
-              >
-                <Text
-                  style={[
-                    styles.optionText,
-                    tamaño === opcion && styles.selectedText,
-                  ]}
-                >
-                  {opcion}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Peso - Editable */}
-          <Text style={styles.sectionLabel}>Peso</Text>
-          <View style={styles.ageContainer}>
-            <TextInput
-              style={styles.ageInput}
-              keyboardType="numeric"
-              placeholder="0"
-              value={peso}
-              onChangeText={setPeso}
-            />
-            <View style={styles.ageUnitContainer}>
-              {["kg", "g"].map((opcion) => (
-                <TouchableOpacity
-                  key={opcion}
-                  style={[
-                    styles.ageUnitButton,
-                    unidadPeso === opcion && styles.selectedAgeUnit,
-                  ]}
-                  onPress={() => setUnidadPeso(opcion)}
-                >
-                  <Text
-                    style={[
-                      styles.ageUnitText,
-                      unidadPeso === opcion && styles.selectedAgeUnitText,
-                    ]}
-                  >
-                    {opcion}
-                  </Text>
-                </TouchableOpacity>
-              ))}
             </View>
-          </View>
 
-          {/* Edad - Editable */}
-          <Text style={styles.sectionLabel}>Edad</Text>
-          <View style={styles.ageContainer}>
-            <TextInput
-              style={styles.ageInput}
-              keyboardType="numeric"
-              placeholder="0"
-              value={edad}
-              onChangeText={setEdad}
-            />
-            <View style={styles.ageUnitContainer}>
-              {["Año(s)", "Meses"].map((opcion) => (
-                <TouchableOpacity
-                  key={opcion}
-                  style={[
-                    styles.ageUnitButton,
-                    unidadEdad === opcion && styles.selectedAgeUnit,
-                  ]}
-                  onPress={() => setUnidadEdad(opcion)}
-                >
-                  <Text
+            {/* Edad - Editable */}
+            <Text style={styles.sectionLabel}>Edad</Text>
+            <View style={styles.ageContainer}>
+              <TextInput
+                style={styles.ageInput}
+                keyboardType="numeric"
+                placeholder="0"
+                value={edad}
+                onChangeText={setEdad}
+              />
+              <View style={styles.ageUnitContainer}>
+                {["Año(s)", "Meses"].map((opcion) => (
+                  <TouchableOpacity
+                    key={opcion}
                     style={[
-                      styles.ageUnitText,
-                      unidadEdad === opcion && styles.selectedAgeUnitText,
+                      styles.ageUnitButton,
+                      unidadEdad === opcion && styles.selectedAgeUnit,
                     ]}
+                    onPress={() => setUnidadEdad(opcion)}
                   >
-                    {opcion}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Text
+                      style={[
+                        styles.ageUnitText,
+                        unidadEdad === opcion && styles.selectedAgeUnitText,
+                      ]}
+                    >
+                      {opcion}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
-          </View>
-        </ScrollView>
+          </ScrollView>
 
-        {/* Botón de eliminar mascota */}
-        <TouchableOpacity
-          style={styles.deleteFullButton}
-          onPress={handleDeletePet}
-        >
-          <Text style={styles.deleteFullButtonText}>Eliminar Mascota</Text>
-        </TouchableOpacity>
-      </View>
+          {/* Botón de eliminar mascota */}
+          <TouchableOpacity
+            style={[
+              styles.deleteFullButton,
+              { marginBottom: insets.bottom + 10 },
+            ]}
+            onPress={handleDeletePet}
+          >
+            <Text style={styles.deleteFullButtonText}>Eliminar Mascota</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
     </View>
   );
 };
@@ -508,7 +521,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 15,
     alignItems: "center",
-    marginBottom: 10,
     borderWidth: 1,
     borderColor: "#e74c3c",
   },

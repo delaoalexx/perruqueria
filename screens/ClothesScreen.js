@@ -1,7 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, ActivityIndicator, AccessibilityInfo } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { getProductsByCategory } from '../services/productsService';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+  Image,
+  ActivityIndicator,
+  AccessibilityInfo,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { getProductsByCategory } from "../services/productsService";
 
 const ClothesScreen = ({ navigation }) => {
   const [toys, setToys] = useState([]);
@@ -15,14 +24,14 @@ const ClothesScreen = ({ navigation }) => {
       const enabled = await AccessibilityInfo.isScreenReaderEnabled();
       setIsScreenReaderEnabled(enabled);
     };
-    
+
     const subscription = AccessibilityInfo.addEventListener(
-      'screenReaderChanged',
+      "screenReaderChanged",
       setIsScreenReaderEnabled
     );
-    
+
     checkScreenReader();
-    
+
     return () => subscription.remove();
   }, []);
 
@@ -32,15 +41,15 @@ const ClothesScreen = ({ navigation }) => {
         const categoryId = "zJqSRFoolKhcGiXvRSTZ ";
         console.log("Fetching products for category:", categoryId);
         const products = await getProductsByCategory(categoryId);
-        
+
         if (!products || products.length === 0) {
           console.warn("No products found for category:", categoryId);
         }
-        
+
         setToys(products || []);
       } catch (err) {
         console.error("Error fetching products:", err);
-        setError('Error al cargar los productos');
+        setError("Error al cargar los productos");
       } finally {
         setLoading(false);
       }
@@ -49,13 +58,12 @@ const ClothesScreen = ({ navigation }) => {
     fetchProducts();
   }, []);
 
-
   const renderProductCard = ({ item }) => (
     <View style={styles.card} accessible={true}>
       <View style={styles.imageContainer}>
         {item.imageUrl ? (
-          <Image 
-            source={{ uri: item.imageUrl }} 
+          <Image
+            source={{ uri: item.imageUrl }}
             style={styles.productImage}
             resizeMode="contain"
             accessibilityIgnoresInvertColors={true}
@@ -72,7 +80,7 @@ const ClothesScreen = ({ navigation }) => {
           {item.name}
         </Text>
         <Text style={styles.productPrice}>
-          MX{item.price ? item.price.toFixed(2) : '0.00'}
+          MX{item.price ? item.price.toFixed(2) : "0.00"}
         </Text>
       </View>
     </View>
@@ -95,7 +103,7 @@ const ClothesScreen = ({ navigation }) => {
   }
 
   return (
-    <View 
+    <View
       style={styles.container}
       importantForAccessibility="yes"
       accessibilityViewIsModal={isScreenReaderEnabled}
@@ -132,93 +140,89 @@ const ClothesScreen = ({ navigation }) => {
   );
 };
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
-    paddingHorizontal: 15,
+    backgroundColor: "#f5f5f5",
+    padding: 20,
+    marginTop: 20,
   },
   center: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 50,
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
     marginBottom: 20,
-  },
-  backButton: {
-    padding: 8,
-    marginRight: 10,
   },
   title: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
   },
   listContent: {
     paddingBottom: 20,
   },
   columnWrapper: {
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
     marginBottom: 15,
   },
   card: {
-    width: '48%',
-    backgroundColor: '#fff',
+    width: "48%",
+    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 3,
   },
   imageContainer: {
-    width: '100%',
+    width: "100%",
     height: 120,
     marginBottom: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
     borderRadius: 8,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   productImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   placeholder: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
   },
   textContainer: {
     paddingHorizontal: 5,
   },
   productName: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 6,
     height: 40, // Altura fija para 2 líneas
   },
   productPrice: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#2ecc71',
-    textAlign: 'right',
+    fontWeight: "700",
+    color: "#2ecc71",
+    textAlign: "right",
   },
   errorText: {
-    color: '#e74c3c',
+    color: "#e74c3c",
     fontSize: 16,
   },
   emptyText: {
-    color: '#7f8c8d',
+    color: "#7f8c8d",
     fontSize: 16,
   },
 });

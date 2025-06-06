@@ -5,10 +5,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   ActivityIndicator,
   StatusBar,
   Alert,
+  Platform,
+  KeyboardAvoidingView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -22,6 +23,7 @@ import {
   updateAppointment,
 } from "../services/appointmentService";
 import { useGoogleAuth } from "../hooks/auth/useGoogleAuth";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const schedules = [
   { label: "10:00", value: "10:00" },
@@ -62,6 +64,9 @@ const ScheduleScreen = () => {
 
   // Estado de carga al confirmar cita
   const [loadingConfirm, setLoadingConfirm] = useState(false);
+
+  // Safe area insets
+  const insets = useSafeAreaInsets();
 
   // Inicializar campos si es edición
   useEffect(() => {
@@ -216,150 +221,168 @@ const ScheduleScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <StatusBar barStyle="dark-content" />
 
-      <View style={styles.headerContainer}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Ionicons name="chevron-back" size={24} color="#000" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>
-            {appointmentToEdit ? "Editar cita" : "Agendar cita"}
-          </Text>
-        </View>
-      </View>
-
-      <ScrollView
-        style={styles.scrollContainer}
-        contentContainerStyle={styles.scrollContent}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
       >
-        {service && (
-          <View style={styles.serviceDetails}>
-            <Text style={styles.serviceTitle}>{service.title}</Text>
-            <Text style={styles.serviceInfo}>Precio: {service.price} Mx</Text>
-            <Text style={styles.serviceInfo}>
-              Tiempo aprox: {service.time} min
-            </Text>
-          </View>
-        )}
-
-        {/* Calendario visual */}
-        <View style={styles.calendarContainer}>
-          <Text style={styles.timeSlotsTitle}>Selecciona una fecha</Text>
-          <Calendar
-            minDate={today}
-            onDayPress={(day) => setSelectedDate(day.dateString)}
-            markedDates={
-              selectedDate
-                ? {
-                    [selectedDate]: {
-                      selected: true,
-                      selectedColor: "#007aff",
-                    },
-                  }
-                : {}
-            }
-            theme={{
-              todayTextColor: "#007aff",
-              arrowColor: "#007aff",
-              selectedDayBackgroundColor: "#007aff",
-            }}
-          />
-        </View>
-
-        {/* Horarios Disponibles */}
-        <View style={styles.timeSlotsContainer}>
-          <Text style={styles.timeSlotsTitle}>Horarios Disponibles</Text>
-          <View style={styles.timeSlotsList}>
-            {schedules.map((h) => (
+        <View style={{ flex: 1 }}>
+          <View style={styles.headerContainer}>
+            <View style={styles.header}>
               <TouchableOpacity
-                key={h.value}
-                style={[
-                  styles.hourButton,
-                  selectedHour === h.value && styles.selectedHourButton,
-                ]}
-                onPress={() => setSelectedHour(h.value)}
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}
               >
-                <Text
-                  style={[
-                    styles.hourButtonText,
-                    selectedHour === h.value && styles.selectedHourButtonText,
-                  ]}
-                >
-                  {h.label}
-                </Text>
+                <Ionicons name="chevron-back" size={24} color="#000" />
               </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* Dropdown para seleccionar mascota */}
-        <View style={styles.dropdownContainer}>
-          <Text style={styles.dropdownLabel}>Selecciona la mascota</Text>
-          {loadingPets ? (
-            <ActivityIndicator color="#007aff" />
-          ) : pets.length === 0 ? (
-            <View style={styles.dropdownCard}>
-              <Text
-                style={{ color: "#e74c3c", fontSize: 16, textAlign: "center" }}
-              >
-                No tienes mascotas registradas. Agrega una para poder agendar
-                una cita.
+              <Text style={styles.headerTitle}>
+                {appointmentToEdit ? "Editar cita" : "Agendar cita"}
               </Text>
             </View>
-          ) : (
-            <View style={styles.dropdownCard}>
-              <RNPickerSelect
-                onValueChange={setSelectedPet}
-                items={pets}
-                placeholder={{
-                  label: "Selecciona una mascota...",
-                  value: null,
+          </View>
+
+          <ScrollView
+            style={styles.scrollContainer}
+            contentContainerStyle={styles.scrollContent}
+          >
+            {service && (
+              <View style={styles.serviceDetails}>
+                <Text style={styles.serviceTitle}>{service.title}</Text>
+                <Text style={styles.serviceInfo}>
+                  Precio: {service.price} Mx
+                </Text>
+                <Text style={styles.serviceInfo}>
+                  Tiempo aprox: {service.time} min
+                </Text>
+              </View>
+            )}
+
+            {/* Calendario visual */}
+            <View style={styles.calendarContainer}>
+              <Text style={styles.timeSlotsTitle}>Selecciona una fecha</Text>
+              <Calendar
+                minDate={today}
+                onDayPress={(day) => setSelectedDate(day.dateString)}
+                markedDates={
+                  selectedDate
+                    ? {
+                        [selectedDate]: {
+                          selected: true,
+                          selectedColor: "#007aff",
+                        },
+                      }
+                    : {}
+                }
+                theme={{
+                  todayTextColor: "#007aff",
+                  arrowColor: "#007aff",
+                  selectedDayBackgroundColor: "#007aff",
                 }}
-                style={{
-                  inputIOS: styles.dropdownInput,
-                  inputAndroid: styles.dropdownInput,
-                  iconContainer: styles.dropdownIconContainer,
-                  placeholder: styles.dropdownPlaceholder,
-                }}
-                value={selectedPet}
-                disabled={!!appointmentToEdit}
               />
             </View>
-          )}
-        </View>
-      </ScrollView>
 
-      <View style={styles.actionButtonsContainer}>
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={() => navigation.goBack()}
+            {/* Horarios Disponibles */}
+            <View style={styles.timeSlotsContainer}>
+              <Text style={styles.timeSlotsTitle}>Horarios Disponibles</Text>
+              <View style={styles.timeSlotsList}>
+                {schedules.map((h) => (
+                  <TouchableOpacity
+                    key={h.value}
+                    style={[
+                      styles.hourButton,
+                      selectedHour === h.value && styles.selectedHourButton,
+                    ]}
+                    onPress={() => setSelectedHour(h.value)}
+                  >
+                    <Text
+                      style={[
+                        styles.hourButtonText,
+                        selectedHour === h.value &&
+                          styles.selectedHourButtonText,
+                      ]}
+                    >
+                      {h.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Dropdown para seleccionar mascota */}
+            <View style={styles.dropdownContainer}>
+              <Text style={styles.dropdownLabel}>Selecciona la mascota</Text>
+              {loadingPets ? (
+                <ActivityIndicator color="#007aff" />
+              ) : pets.length === 0 ? (
+                <View style={styles.dropdownCard}>
+                  <Text
+                    style={{
+                      color: "#e74c3c",
+                      fontSize: 16,
+                      textAlign: "center",
+                    }}
+                  >
+                    No tienes mascotas registradas. Agrega una para poder
+                    agendar una cita.
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.dropdownCard}>
+                  <RNPickerSelect
+                    onValueChange={setSelectedPet}
+                    items={pets}
+                    placeholder={{
+                      label: "Selecciona una mascota...",
+                      value: null,
+                    }}
+                    style={{
+                      inputIOS: styles.dropdownInput,
+                      inputAndroid: styles.dropdownInput,
+                      iconContainer: styles.dropdownIconContainer,
+                      placeholder: styles.dropdownPlaceholder,
+                    }}
+                    value={selectedPet}
+                    disabled={!!appointmentToEdit}
+                  />
+                </View>
+              )}
+            </View>
+          </ScrollView>
+
+          <View
+            style={[
+              styles.actionButtonsContainer,
+              { paddingBottom: insets.bottom + 10 },
+            ]}
           >
-            <Text style={styles.cancelButtonText}>Cancelar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.confirmButton}
-            onPress={handleConfirm}
-            disabled={
-              loadingConfirm || pets.length === 0 // Deshabilita si no hay mascotas
-            }
-          >
-            {loadingConfirm ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.confirmButtonText}>
-                {appointmentToEdit ? "Guardar cambios" : "Confirmar"}
-              </Text>
-            )}
-          </TouchableOpacity>
+            <View style={styles.actionButtons}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => navigation.goBack()}
+              >
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={handleConfirm}
+                disabled={loadingConfirm || pets.length === 0}
+              >
+                {loadingConfirm ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.confirmButtonText}>
+                    {appointmentToEdit ? "Guardar cambios" : "Confirmar"}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-      </View>
-    </SafeAreaView>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
@@ -525,7 +548,6 @@ const styles = StyleSheet.create({
   },
   actionButtonsContainer: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
     paddingTop: 10,
     backgroundColor: "#f5f5f5",
   },

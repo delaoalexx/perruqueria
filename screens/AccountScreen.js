@@ -31,6 +31,9 @@ const AccountScreen = () => {
   const [userName, setUserName] = useState("Usuario");
   const [inputName, setInputName] = useState("");
   const [userPhoto, setUserPhoto] = useState(null);
+  const [tempUserPhoto, setTempUserPhoto] = useState(null);
+  const [photoChanged, setPhotoChanged] = useState(false);
+  const [nameError, setNameError] = useState(false);
 
   // Cargar mascotas del usuario autenticado
   const loadPets = useCallback(async () => {
@@ -63,8 +66,11 @@ const AccountScreen = () => {
   useEffect(() => {
     if (modalVisible) {
       setInputName(userName);
+      setTempUserPhoto(userPhoto);
+      setPhotoChanged(false);
+      setNameError(false);
     }
-  }, [modalVisible, userName]);
+  }, [modalVisible, userName, userPhoto]);
 
   // Seleccionar foto
   const pickImage = async () => {
@@ -75,25 +81,50 @@ const AccountScreen = () => {
       quality: 0.5,
     });
     if (!result.canceled) {
-      setUserPhoto(result.assets[0].uri);
-      await AsyncStorage.setItem("userPhoto_" + email, result.assets[0].uri);
+      setTempUserPhoto(result.assets[0].uri);
+      setPhotoChanged(true);
     }
   };
 
   // Borrar foto
-  const removePhoto = async () => {
-    setUserPhoto(null);
-    await AsyncStorage.removeItem("userPhoto_" + email);
+  const removePhoto = () => {
+    setTempUserPhoto(null);
+    setPhotoChanged(true);
   };
 
-  // Guardar nombre
+  // Guardar nombre y foto
   const saveName = async () => {
-    if (inputName.trim()) {
-      setUserName(inputName.trim());
-      await AsyncStorage.setItem("userName_" + email, inputName.trim());
-      setInputName("");
-      setModalVisible(false);
+    if (!inputName.trim()) {
+      setNameError(true);
+      return;
     }
+
+    setUserName(inputName.trim());
+    await AsyncStorage.setItem("userName_" + email, inputName.trim());
+
+    // Solo actualizar la foto si hubo cambios
+    if (photoChanged) {
+      setUserPhoto(tempUserPhoto);
+      if (tempUserPhoto) {
+        await AsyncStorage.setItem("userPhoto_" + email, tempUserPhoto);
+      } else {
+        await AsyncStorage.removeItem("userPhoto_" + email);
+      }
+    }
+
+    setInputName("");
+    setTempUserPhoto(null);
+    setPhotoChanged(false);
+    setNameError(false);
+    setModalVisible(false);
+  };
+
+  // Función para cerrar el modal
+  const closeModal = () => {
+    setModalVisible(false);
+    setTempUserPhoto(null);
+    setPhotoChanged(false);
+    setNameError(false);
   };
 
   const handleLogout = async () => {
@@ -176,7 +207,14 @@ const AccountScreen = () => {
               ]}
             >
               <View style={styles.petAvatar}>
-                <Ionicons name="paw" size={32} color="#fff" />
+                {pet.picUrl ? (
+                  <Image
+                    source={{ uri: pet.picUrl }}
+                    style={{ width: 48, height: 48, borderRadius: 24 }}
+                  />
+                ) : (
+                  <Ionicons name="paw" size={32} color="#fff" />
+                )}
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.petName}>{pet.name}</Text>
@@ -210,32 +248,6 @@ const AccountScreen = () => {
             </View>
             <Ionicons name="chevron-forward" size={20} color="#666" />
           </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.optionItem, styles.borderBottom]}>
-            <View style={styles.optionContent}>
-              <Ionicons
-                name="list-outline"
-                size={20}
-                color="#333"
-                style={styles.optionIcon}
-              />
-              <Text style={styles.optionText}>Listas</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.optionItem}>
-            <View style={styles.optionContent}>
-              <Ionicons
-                name="settings-outline"
-                size={20}
-                color="#333"
-                style={styles.optionIcon}
-              />
-              <Text style={styles.optionText}>Opción 3</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
-          </TouchableOpacity>
         </View>
 
         {/* Espacio para el botón fijo */}
@@ -247,98 +259,53 @@ const AccountScreen = () => {
         visible={modalVisible}
         animationType="slide"
         transparent
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={closeModal}
       >
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0,0,0,0.3)",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: "#fff",
-              borderRadius: 20,
-              padding: 24,
-              width: "85%",
-              alignItems: "center",
-            }}
-          >
-            <Text
-              style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}
-            >
-              Información Personal
-            </Text>
-            <Text style={{ marginBottom: 10 }}>Correo: {email}</Text>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Información Personal</Text>
+            <Text style={styles.modalEmail}>Correo: {email}</Text>
             <TouchableOpacity onPress={pickImage} style={{ marginBottom: 10 }}>
-              {userPhoto ? (
+              {tempUserPhoto ? (
                 <Image
-                  key={userPhoto}
-                  source={{ uri: userPhoto }}
-                  style={{ width: 80, height: 80, borderRadius: 40 }}
+                  key={tempUserPhoto}
+                  source={{ uri: tempUserPhoto }}
+                  style={styles.modalPhoto}
                 />
               ) : (
-                <View
-                  style={{
-                    width: 80,
-                    height: 80,
-                    borderRadius: 40,
-                    backgroundColor: "#eee",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                >
+                <View style={styles.modalPhotoPlaceholder}>
                   <Ionicons name="camera" size={36} color="#888" />
                 </View>
               )}
-              <Text style={{ color: "#007aff", marginTop: 5 }}>
-                Cambiar Foto
-              </Text>
+              <Text style={styles.modalChangePhotoText}>Cambiar Foto</Text>
             </TouchableOpacity>
-            {userPhoto && (
+            {tempUserPhoto && (
               <TouchableOpacity
                 onPress={removePhoto}
-                style={{
-                  marginBottom: 15,
-                  backgroundColor: "#eee",
-                  borderRadius: 8,
-                  paddingVertical: 6,
-                  paddingHorizontal: 16,
-                }}
+                style={styles.modalRemovePhotoButton}
               >
-                <Text style={{ color: "#e74c3c" }}>Borrar Foto</Text>
+                <Text style={styles.modalRemovePhotoText}>Borrar Foto</Text>
               </TouchableOpacity>
             )}
             <TextInput
               placeholder="Nombre"
               value={inputName}
-              onChangeText={setInputName}
-              style={{
-                borderWidth: 1,
-                borderColor: "#ccc",
-                borderRadius: 10,
-                padding: 10,
-                width: "100%",
-                marginBottom: 15,
+              onChangeText={(text) => {
+                setInputName(text);
+                if (nameError && text.trim()) {
+                  setNameError(false);
+                }
               }}
+              style={[styles.modalInput, nameError && styles.modalInputError]}
             />
-            <TouchableOpacity
-              style={{
-                backgroundColor: "#007aff",
-                borderRadius: 10,
-                padding: 12,
-                width: "100%",
-                alignItems: "center",
-                marginBottom: 10,
-              }}
-              onPress={saveName}
-            >
-              <Text style={{ color: "#fff", fontWeight: "bold" }}>Guardar</Text>
+            {nameError && (
+              <Text style={styles.modalErrorText}>Debe ingresar un nombre</Text>
+            )}
+            <TouchableOpacity style={styles.modalSaveButton} onPress={saveName}>
+              <Text style={styles.modalSaveButtonText}>Guardar</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => setModalVisible(false)}>
-              <Text style={{ color: "#e74c3c" }}>Cerrar</Text>
+            <TouchableOpacity onPress={closeModal}>
+              <Text style={styles.modalCloseText}>Cerrar</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -468,10 +435,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
-  borderBottom: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-  },
   spacer: {
     height: 20,
   },
@@ -504,6 +467,87 @@ const styles = StyleSheet.create({
     color: "#e74c3c",
     marginLeft: 10,
     fontWeight: "bold",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 24,
+    width: "85%",
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  modalEmail: {
+    marginBottom: 10,
+  },
+  modalPhoto: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+  modalPhotoPlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#eee",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalChangePhotoText: {
+    color: "#007aff",
+    marginTop: 5,
+  },
+  modalRemovePhotoButton: {
+    marginBottom: 15,
+    backgroundColor: "#eee",
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+  },
+  modalRemovePhotoText: {
+    color: "#e74c3c",
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    padding: 10,
+    width: "100%",
+    marginBottom: 15,
+  },
+  modalInputError: {
+    borderColor: "#e74c3c",
+    marginBottom: 5,
+  },
+  modalErrorText: {
+    color: "#e74c3c",
+    fontSize: 12,
+    alignSelf: "flex-start",
+    marginBottom: 15,
+  },
+  modalSaveButton: {
+    backgroundColor: "#007aff",
+    borderRadius: 10,
+    padding: 12,
+    width: "100%",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  modalSaveButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  modalCloseText: {
+    color: "#e74c3c",
   },
 });
 
