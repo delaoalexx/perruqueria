@@ -1,22 +1,46 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, ActivityIndicator, AccessibilityInfo } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getProducts } from '../services/productsService';
+import { getProductsByCategory } from '../services/productsService';
 
 const WalkScreen = ({ navigation }) => {
   const [toys, setToys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isScreenReaderEnabled, setIsScreenReaderEnabled] = useState(false);
   const numColumns = 2;
+
+  useEffect(() => {
+    const checkScreenReader = async () => {
+      const enabled = await AccessibilityInfo.isScreenReaderEnabled();
+      setIsScreenReaderEnabled(enabled);
+    };
+    
+    const subscription = AccessibilityInfo.addEventListener(
+      'screenReaderChanged',
+      setIsScreenReaderEnabled
+    );
+    
+    checkScreenReader();
+    
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const products = await getProducts();
-        setToys(products);
+        const categoryId = " zS7V6CLGfKGsI52RXrzk ";
+        console.log("Fetching products for category:", categoryId);
+        const products = await getProductsByCategory(categoryId);
+        
+        if (!products || products.length === 0) {
+          console.warn("No products found for category:", categoryId);
+        }
+        
+        setToys(products || []);
       } catch (err) {
+        console.error("Error fetching products:", err);
         setError('Error al cargar los productos');
-        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -25,15 +49,16 @@ const WalkScreen = ({ navigation }) => {
     fetchProducts();
   }, []);
 
+
   const renderProductCard = ({ item }) => (
-    <View style={styles.card}>
-      {/* Contenedor de imagen con placeholder */}
+    <View style={styles.card} accessible={true}>
       <View style={styles.imageContainer}>
         {item.imageUrl ? (
           <Image 
             source={{ uri: item.imageUrl }} 
             style={styles.productImage}
             resizeMode="contain"
+            accessibilityIgnoresInvertColors={true}
           />
         ) : (
           <View style={styles.placeholder}>
@@ -42,13 +67,12 @@ const WalkScreen = ({ navigation }) => {
         )}
       </View>
 
-      {/* Contenido textual */}
       <View style={styles.textContainer}>
         <Text style={styles.productName} numberOfLines={2}>
           {item.name}
         </Text>
         <Text style={styles.productPrice}>
-          ${item.price ? item.price.toFixed(2) : '0.00'}
+          MX{item.price ? item.price.toFixed(2) : '0.00'}
         </Text>
       </View>
     </View>
@@ -71,19 +95,23 @@ const WalkScreen = ({ navigation }) => {
   }
 
   return (
-    <View style={styles.container}>
-      {/* Header con botón de retroceso */}
+    <View 
+      style={styles.container}
+      importantForAccessibility="yes"
+      accessibilityViewIsModal={isScreenReaderEnabled}
+    >
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
+          accessibilityLabel="Volver atrás"
+          accessibilityRole="button"
         >
           <Ionicons name="chevron-back" size={24} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.title}>Juguetes para Paseo</Text>
+        <Text style={styles.title}>Para Paseo</Text>
       </View>
 
-      {/* Lista de productos */}
       {toys.length === 0 ? (
         <View style={[styles.container, styles.center]}>
           <Text style={styles.emptyText}>No hay productos disponibles</Text>
@@ -97,11 +125,14 @@ const WalkScreen = ({ navigation }) => {
           contentContainerStyle={styles.listContent}
           columnWrapperStyle={styles.columnWrapper}
           showsVerticalScrollIndicator={false}
+          accessibilityElementsHidden={false}
         />
       )}
     </View>
   );
 };
+
+
 
 const styles = StyleSheet.create({
   container: {

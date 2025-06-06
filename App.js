@@ -13,6 +13,8 @@ import MyAppointmentsScreen from "./screens/MyAppointmentsScreen";
 import WalkScreen from './screens/WalkScreen';
 import CleanScreen from './screens/CleanScreen';
 import FoodScreen from "./screens/FoodScreen";
+import ClothesScreen from "./screens/ClothesScreen";
+import ToyScreen from "./screens/ToyScreen";
 
 const Stack = createStackNavigator();
 
@@ -78,6 +80,16 @@ export default function App() {
         <Stack.Screen
           name="FoodScreen"
           component={FoodScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="ClothesScreen"
+          component={ClothesScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="ToyScreen"
+          component={ToyScreen}
           options={{ headerShown: false }}
         />
         
