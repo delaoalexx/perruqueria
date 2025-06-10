@@ -15,6 +15,7 @@ import CleanScreen from './screens/CleanScreen';
 import FoodScreen from "./screens/FoodScreen";
 import ClothesScreen from "./screens/ClothesScreen";
 import ToyScreen from "./screens/ToyScreen";
+import BddScreen from "./screens/BddScreen";
 
 const Stack = createStackNavigator();
 
@@ -90,6 +91,11 @@ export default function App() {
         <Stack.Screen
           name="ToyScreen"
           component={ToyScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="BddScreen"
+          component={BddScreen}
           options={{ headerShown: false }}
         />
         
